@@ -212,7 +212,7 @@
 	(up-modify-goal point-y c:- wall-box-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== PICK LONGEST TC GATE SIDE ========================
 (defrule
@@ -223,7 +223,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-east)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -233,7 +233,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-north)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -243,7 +243,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-west)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GEOMETRY: MAIN CHOKE (SITE 1) ========================
 (defrule

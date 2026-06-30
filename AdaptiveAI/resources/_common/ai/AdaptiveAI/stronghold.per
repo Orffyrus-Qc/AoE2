@@ -165,7 +165,7 @@
 	(up-modify-goal point-y c:- stronghold-tc-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== GEOMETRY: CASTLE AT INDEX ========================
@@ -192,7 +192,7 @@
 	(up-modify-goal point-y c:- stronghold-castle-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== GEOMETRY: CASTLE MAINTAIN AT INDEX ========================
@@ -219,7 +219,7 @@
 	(up-modify-goal point-y c:- stronghold-castle-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== PICK LONGEST GATE SIDE ========================
@@ -230,7 +230,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-east)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
@@ -239,7 +239,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-north)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
@@ -248,7 +248,7 @@
 	(up-compare-goal point-distance g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-west)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GATE WALL STUB (PALISADE) ========================
 (defrule
