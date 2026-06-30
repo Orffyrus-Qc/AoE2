@@ -1,0 +1,81 @@
+;==============================================================================
+; AdaptiveAI - Minimal economy skeleton (replace with Promisory in Phase 2)
+; Enough to feudal, scout, and test detection/response rules.
+;==============================================================================
+
+(defrule
+	(true)
+=>
+	(set-strategic-number sn-percent-civilian-explorers 25)
+	(set-strategic-number sn-percent-enemy-sighted-response 100)
+	(set-strategic-number sn-attack-intelligence 1)
+	(set-strategic-number sn-intelligent-gathering 1)
+	(disable-self))
+
+; Standard dark age: houses, villagers, loom
+(defrule
+	(current-age == dark-age)
+	(housing < 5)
+	(can-build-with-escrow house)
+=>
+	(build house))
+
+(defrule
+	(current-age == dark-age)
+	(civilian-population < 25)
+	(can-train villager)
+=>
+	(train villager))
+
+(defrule
+	(current-age == dark-age)
+	(research-available ri-loom)
+	(research ri-loom != research-done)
+=>
+	(research ri-loom))
+
+; Feudal age up when we have food
+(defrule
+	(current-age == dark-age)
+	(food-amount >= 500)
+	(can-research-with-escrow ri-feudal-age)
+=>
+	(research ri-feudal-age))
+
+; Post-feudal: lumber camp + mill if missing
+(defrule
+	(current-age >= feudal-age)
+	(building-type-count lumber-camp < 1)
+	(can-build-with-escrow lumber-camp)
+=>
+	(build lumber-camp))
+
+(defrule
+	(current-age >= feudal-age)
+	(building-type-count mill < 1)
+	(can-build-with-escrow mill)
+=>
+	(build mill))
+
+; Keep making villagers through feudal
+(defrule
+	(current-age >= feudal-age)
+	(civilian-population < 40)
+	(can-train villager)
+=>
+	(train villager))
+
+; Basic scout production for map awareness
+(defrule
+	(current-age >= feudal-age)
+	(building-type-count stable < 1)
+	(can-build-with-escrow stable)
+=>
+	(build stable))
+
+(defrule
+	(current-age >= feudal-age)
+	(can-train scout-cavalry)
+	(unit-type-count-total scout-cavalry < 2)
+=>
+	(train scout-cavalry))

@@ -1,0 +1,282 @@
+;==============================================================================
+; AdaptiveAI v0.8 - Strategic defensive + offensive towers
+; Defensive: flanks around TC toward the threat vector.
+; Offensive: forward towers toward enemy base / map control.
+;==============================================================================
+
+; ======================== ABORT ========================
+(defrule
+	(goal inseln yes)
+=>
+	(set-goal mem-tower-def-active 0)
+	(set-goal mem-tower-off-active 0))
+
+(defrule
+	(game-time >= tower-time-max)
+=>
+	(set-goal mem-tower-def-active 0)
+	(set-goal mem-tower-off-active 0))
+
+; ======================== ARM DEFENSIVE ========================
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(goal underattack yes)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-adapt-mode == adapt-defensive)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-detected-opening == opening-archer-rush)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+(or	(up-compare-goal mem-detected-opening == opening-drush)
+(or	(up-compare-goal mem-detected-opening == opening-scout-rush)
+	(up-compare-goal mem-detected-opening == opening-maa-flush)))
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-attack-events >= tower-trigger-raids)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+; ======================== ARM OFFENSIVE ========================
+(defrule
+	(up-compare-goal mem-tower-off-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-adapt-mode == adapt-pressure-castle)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+=>
+	(set-goal mem-tower-off-active 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal mem-tower-stuck 0)
+	(set-goal trainbombard yes))
+
+(defrule
+	(up-compare-goal mem-tower-off-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(goal attacking yes)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+	(military-population >= group-castle-min)
+=>
+	(set-goal mem-tower-off-active 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal mem-tower-stuck 0)
+	(set-goal trainbombard yes))
+
+(defrule
+	(up-compare-goal mem-tower-off-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-detected-opening == opening-fast-castle)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+	(up-compare-sn sn-military-superiority >= 1)
+=>
+	(set-goal mem-tower-off-active 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal mem-tower-stuck 0)
+	(set-goal trainbombard yes))
+
+; ======================== DONE CONDITIONS ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot >= tower-def-max)
+=>
+	(set-goal mem-tower-def-active 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(building-type-count-total tower-class >= tower-def-built-max)
+=>
+	(set-goal mem-tower-def-active 0))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot >= tower-off-max)
+=>
+	(set-goal mem-tower-off-active 0))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(building-type-count-total bombard-tower >= tower-off-built-max)
+=>
+	(set-goal mem-tower-off-active 0))
+
+; ======================== UPGRADE DEFENSIVE WATCH TOWERS ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(current-age >= castle-age)
+	(can-research ri-guard-tower)
+	(building-type-count watch-tower >= 1)
+=>
+	(research ri-guard-tower))
+
+; ======================== DEFENSIVE PLACEMENT (TC FLANKS) ========================
+; Slot 0: TC pushed toward enemy approach
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 0)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-forward))
+
+; Slot 1: second flank, offset perpendicular to the threat line
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 1)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-forward-side)
+	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
+
+; ======================== OFFENSIVE PLACEMENT (FORWARD) ========================
+; Slot 0: main forward tower on the attack vector
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot == 0)
+	(current-age >= castle-age)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: tower-off-lerp-main))
+
+; Slot 1: secondary forward tower, slight flank offset
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot == 1)
+	(current-age >= castle-age)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: tower-off-lerp-side)
+	(up-cross-tiles temporary-point-x enemy-x c: tower-off-cross))
+
+; ======================== BUILD DEFENSIVE FEUDAL WATCH ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(current-age >= feudal-age)
+	(wood-amount >= tower-wood-min)
+(or	(current-age <= castle-age)
+	(stone-amount < tower-stone-min))
+	(up-compare-goal mem-tower-def-slot < tower-def-max)
+	(up-pending-objects c: watch-tower < tower-pending-max)
+	(up-can-build-line 0 saved-point-x c: watch-tower-building)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: watch-tower-building)
+	(up-assign-builders c: watch-tower c: 3)
+	(up-modify-goal mem-tower-def-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))
+
+; ======================== BUILD DEFENSIVE CASTLE BOMBARD ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+	(up-compare-goal mem-tower-def-slot < tower-def-max)
+	(up-pending-objects c: bombard-tower < tower-pending-max)
+	(can-build bombard-tower)
+	(up-can-build-line 0 saved-point-x c: bombard-tower)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: bombard-tower)
+	(up-assign-builders c: bombard-tower c: 2)
+	(up-modify-goal mem-tower-def-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))
+
+; ======================== BUILD OFFENSIVE BOMBARD ========================
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+	(up-compare-goal mem-tower-off-slot < tower-off-max)
+	(up-pending-objects c: bombard-tower < tower-pending-max)
+	(up-point-distance temporary-point-x position-self-x >= tower-off-min-dist)
+	(up-point-distance temporary-point-x enemy-x <= tower-off-max-dist)
+	(can-build bombard-tower)
+	(up-can-build-line 0 temporary-point-x c: bombard-tower)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line temporary-point-x temporary-point-x c: bombard-tower)
+	(up-assign-builders c: bombard-tower c: 2)
+	(up-modify-goal mem-tower-off-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))
+
+; ======================== RETRY / SKIP BAD SPOTS ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-stuck >= tower-stuck-max)
+=>
+	(up-modify-goal mem-tower-def-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-stuck >= tower-stuck-max)
+=>
+	(up-modify-goal mem-tower-off-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-stuck < tower-stuck-max)
+(or	(up-point-contains saved-point-x c: tree-class)
+	(up-point-contains saved-point-x c: building-class))
+=>
+	(up-modify-goal mem-tower-stuck c:+ 1)
+	(up-lerp-tiles saved-point-x position-self-x c: 1))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-stuck < tower-stuck-max)
+(or	(up-point-contains temporary-point-x c: tree-class)
+	(up-point-contains temporary-point-x c: building-class))
+=>
+	(up-modify-goal mem-tower-stuck c:+ 1)
+	(up-lerp-tiles temporary-point-x position-self-x c: 1))

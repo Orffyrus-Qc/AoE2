@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v0.7)
+## AdaptiveAI (v0.9)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -12,7 +12,8 @@ Age of Empires II: Definitive Edition mods and AI projects.
 |--------|------|
 | **Detection** | Identifies enemy openings (drush, scout rush, archer rush, MAA flush, fast castle) and mid-game pivots (mass archers, cavalry, infantry). Works in 1v1 and team games via `any-enemy`. |
 | **Response** | Bridges detections into Promisory goals — counter unit training (`trainpike`, `trainskirm`, `trainarcher`, etc.), enemy-goal tags, and rally posture. |
-| **Defense** | Builds a **palisade box + gate** around the Town Center when threatened. Triggers on attacks, detected openings, raids, high aggression, or proactively in feudal (~7 min). Independent of Promisory `CENTER-WALL` (disabled in Promisory). |
+| **Defense** | **TC palisade box + gate**, then up to **2 forward choke walls with gates** placed toward the enemy threat vector. Independent of Promisory `CENTER-WALL`. |
+| **Towers** | **Defensive** watch/guard/bombard towers on TC flanks; **offensive** forward bombards in castle when pushing. |
 | **Military** | Coordinated **group attacks** instead of one-unit trickles: anti-TSA grouping, age-scaled wave sizes, siege escorts, defend groups, and pre-attack rally staging. |
 
 Adaptation is **silent** — no in-game chat spam from the adaptive layer.
@@ -56,7 +57,8 @@ Try different openings and watch for:
 
 - Counter units (spears vs scouts, skirms vs archers, etc.)
 - Grouped army pushes instead of stream attacks
-- Palisade wall + gate around the AI Town Center when you pressure feudal
+- TC palisade box + gate, then forward choke walls with gates
+- Defensive towers near TC; offensive bombards mid-map in castle
 
 Scout the enemy so the AI can see your units and buildings — detection depends on visibility.
 
@@ -78,14 +80,16 @@ AdaptiveAI/
 `AdaptiveAI.per` loads the full Promisory stack, then appends:
 
 ```
-constants → memory → detection → response → defense → military
+constants → memory → detection → response → defense → towers → military
 ```
 
 Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal goals.
 
 ### Version history (high level)
 
-- **v0.7** — Reliable TC palisade box + gate (recompute every tick, broader triggers, lower wood threshold). User-tested working.
+- **v0.9** — Strategic choke walls + gates, defensive/offensive towers. User-tested working.
+- **v0.8** — Tower placement module (TC flanks + forward bombards).
+- **v0.7** — Reliable TC palisade box + gate (recompute every tick, broader triggers).
 - **v0.6.x** — Earlier multi-phase wall state machine (replaced in v0.7).
 - **v0.4.x** — Silent detection (removed adaptive chat).
 - **v0.3** — Opening detection + counter steering on Promisory Extreme.
