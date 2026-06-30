@@ -67,9 +67,9 @@
 	(goal inseln no)
 	(game-time < wall-time-max)
 (or	(up-compare-goal mem-detected-opening == opening-drush)
-(or	(up-compare-goal mem-detected-opening == opening-scout-rush)
-(or	(up-compare-goal mem-detected-opening == opening-archer-rush)
-	(up-compare-goal mem-detected-opening == opening-maa-flush))))
+	(up-compare-goal mem-detected-opening == opening-scout-rush)
+	(up-compare-goal mem-detected-opening == opening-archer-rush)
+	(up-compare-goal mem-detected-opening == opening-maa-flush))
 =>
 	(set-goal mem-wall-active 1))
 
