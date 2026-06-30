@@ -18,12 +18,16 @@ Do not use houses, farms, barracks, ranges, stables, markets, blacksmiths, monas
 
 The relevant files are:
 
+- `AdaptiveAI/resources/_common/ai/AdaptiveAI/base.per`
+- `AdaptiveAI/resources/_common/ai/AdaptiveAI/compat.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/stronghold.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/defense.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/fortify.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/gatealign.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/builders.per`
 - `AdaptiveAI/resources/_common/ai/AdaptiveAI/constants.per`
+
+`AdaptiveAI.per` is now standalone: it loads local `compat.per` for old constant names, then AdaptiveAI modules. Do not re-add Promisory behavior modules to solve walling or worker persistence; fix those behaviors in AdaptiveAI's own base, builder, wall, gate, tower, raid, and coordination files.
 
 The current `stronghold.per` design is a full rectangular wall ring with one controlled gate on the longest side. That is a good default for AI: one gate is easier to build, align, defend, repair, and rebuild than four gates. If you want four gates later, treat that as a separate optional mode, not the default repair-safe design.
 
@@ -47,7 +51,7 @@ Teach the AI to think in segments, not in a single magic wall:
 Gates should be built into an existing wall tile or wall foundation. The correct sequence is:
 
 1. Build the wall line or at least a short wall stub at the gate point.
-2. Use `gatealign.per` to probe valid gate orientation.
+2. Use `gatealign.per` to probe only the gate orientations parallel with that wall segment.
 3. Build exactly one palisade or stone gate at the local gate point.
 4. Assign extra builders to the gate foundation because incomplete gates are common weak points.
 5. When checking whether a gate already exists, search near `saved-point-x`; do not use a global gate count.

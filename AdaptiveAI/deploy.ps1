@@ -8,9 +8,6 @@ $dstAi = Join-Path $gameRoot "ai"
 $dstDrs = Join-Path $gameRoot "drs\gamedata_x2"
 $modRoot = Join-Path $env:USERPROFILE "Games\Age of Empires 2 DE\mods\local\AdaptiveAI"
 
-$env:PYTHONIOENCODING = "utf-8"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
 Copy-Item -Path (Join-Path $src "ai\AdaptiveAI.ai") -Destination $dstAi -Force
 Copy-Item -Path (Join-Path $src "ai\AdaptiveAI.per") -Destination $dstAi -Force
 Copy-Item -Path (Join-Path $src "ai\AdaptiveExtreme.per2") -Destination $dstAi -Force

@@ -2,9 +2,9 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v2.5)
+## AdaptiveAI (v2.6)
 
-**AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
+**AdaptiveAI** is a local standalone AI mod. Promisory behavior rules are no longer loaded; only the old constant/goal names are assimilated in `compat.per` so the adaptive modules keep parsing. The local `base.per` now handles economy, aging through Imperial, villager control, and unit production while the adaptive modules steer counters, military posture, raids, and base defense.
 
 ### What it does
 
@@ -14,7 +14,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Intel** | Tracks enemy TC/castle counts, siege/monk/military peaks for superiority decisions. |
 | **Superiority** | Presses when ahead, turtles when behind, releases defensive mode after calm period. |
 | **Counters** | Civ-aware unit counter steering on top of opening detection. |
-| **Response** | Bridges detections into Promisory goals — counter unit training, enemy-goal tags, rally posture. |
+| **Response** | Bridges detections into local AdaptiveAI goals: counter unit training, enemy-goal tags, rally posture. |
 | **Economy** | Feudal/castle boom guards so fortify does not drain food/wood; stone on demand. |
 | **Defense** | **TC palisade box + gate**, resource-site boxes, then **forward choke walls with gates**. |
 | **Isolate** | Walls and gates around lumber camp, mill, and mining camp (skips missing dropsites). |
@@ -41,7 +41,7 @@ Adaptation is **silent** — no in-game chat spam from the adaptive layer.
 
 - **Age of Empires II: Definitive Edition** (Steam or Microsoft Store)
 - **Windows**
-- Promisory AI files ship with the game; this mod only adds the `AdaptiveAI` layer on top.
+- No Promisory behavior dependency. `compat.per` keeps the constants/goal names AdaptiveAI inherited from earlier Promisory-based versions.
 
 ### Install
 
@@ -95,23 +95,24 @@ AdaptiveAI/
 ├── resources/_common/ai/     # AI scripts (.per, .ai, .per2)
 ├── deploy.ps1                # Deploy to game + local mod
 ├── package-for-sharing.ps1   # Build zip for sharing
-├── patch-promisory-debug.ps1 # Removes Promisory debug chat spam
 ├── create_test_scenario.py   # Regenerates the 1v1 test scenario
 └── INSTALL.txt               # Short install notes
 ```
 
 ### Architecture
 
-`AdaptiveAI.per` loads the full Promisory stack, then appends:
+`AdaptiveAI.per` and `AdaptiveExtreme.per2` now load the same standalone stack:
 
 ```
-constants → memory → intel → detection → superiority → counters → response
-→ economy → builders → defense → isolate → towers → fortify → stronghold → military → preattack → explore → raid → coordination
+compat -> constants -> memory -> base -> intel -> detection -> superiority -> counters -> response
+-> economy -> builders -> defense -> isolate -> towers -> fortify -> stronghold -> military -> preattack -> explore -> raid -> coordination
 ```
 
-Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal goals.
+Goal slots **1900+** in `constants.per` avoid collisions with the compatibility goals.
 
 ### Version history (high level)
+
+- **v2.6** - Standalone loader: Promisory behavior excluded, constants assimilated locally, local base now owns economy, age-up to Imperial, production, under-attack tracking, enemy point tracking, and military caps.
 
 - **v2.5** — Scaling dedicated build/repair corps; more workers over time for walls, gates, towers, TCs, castles; rising fort caps.
 - **v2.4** — New TC compounds prioritized (incl. foundations); raid builders place forward TC/tower/castle/stone wall/gate.
@@ -136,5 +137,6 @@ Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal
 ### License / credits
 
 - **Author:** Orffyrus
-- **Base AI:** Promisory Extreme (included with AoE2 DE)
+- **Base AI:** AdaptiveAI standalone base (`base.per`)
+- **Compatibility source:** Promisory constant names only, assimilated locally in `compat.per`
 - Use and modify freely; no warranty.
