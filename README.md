@@ -20,7 +20,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Isolate** | Walls and gates around lumber camp, mill, and mining camp (skips missing dropsites). |
 | **Towers** | Defensive towers on TC flanks + resource sites; forward waves at slots 6–8 after isolation. |
 | **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. **Surplus wood** → more palisade walls/gates; **surplus stone** → more stone walls/gates (up to caps). |
-| **Stronghold** | **Every TC and castle** gets a walled compound with **4 gates** (one per side). **Repairs** damaged walls/gates; **rebuilds** missing segments on a timer and when under attack. |
+| **Stronghold** | **Every TC and castle** gets a walled compound with **one controlled gate on the longest side**. **Repairs** damaged walls/gates; **rebuilds** missing segments on a timer and when under attack. |
 | **Explore** | **Army scouts** sweep the map toward enemy flanks; **monitors** enemy TC/castle and food sites. Raids wait for intel (or 8‑min fallback), then hit closest visible food. |
 | **Builders** | **Dedicated build corps** (group 19): worker counts **rise over time** with age, TCs, and castles. Extra villagers on pending **walls, gates, towers, TCs, castles**; continuous **repair/rebuild**; rising wall/gate caps. |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
@@ -85,6 +85,8 @@ Try different openings and watch for:
 
 Scout the enemy so the AI can see your units and buildings — detection depends on visibility.
 
+For Grok Build walling guidance, see [`GROK_BUILD_WALLING_BRIEF.md`](./GROK_BUILD_WALLING_BRIEF.md).
+
 ### Project layout
 
 ```
@@ -114,7 +116,7 @@ Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal
 - **v2.5** — Scaling dedicated build/repair corps; more workers over time for walls, gates, towers, TCs, castles; rising fort caps.
 - **v2.4** — New TC compounds prioritized (incl. foundations); raid builders place forward TC/tower/castle/stone wall/gate.
 - **v2.3** — Army explore patrol + enemy position monitor; raids dispatch only after enemy/food intel (8‑min fallback).
-- **v2.2** — Stronghold compounds: wall every TC/castle with 4 gates; repair damaged walls/gates; rebuild missing segments (timer + under attack).
+- **v2.2** — Stronghold compounds: wall every TC/castle with one controlled gate; repair damaged walls/gates; rebuild missing segments (timer + under attack).
 - **v2.1** — Tactical coordination: attack recover phase, raids only in prep, response won't block surplus fortify, tower/wall completion fixes.
 - **v2.0** — Surplus wood/stone triggers extra palisade or stone wall + gate waves until fort caps.
 - **v1.9** — Raiders flank indirect routes and dodge bigger enemy groups on the path; retreat/retarget if ambushed.

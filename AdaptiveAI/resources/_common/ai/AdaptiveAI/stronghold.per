@@ -165,7 +165,7 @@
 	(up-modify-goal point-y c:- stronghold-tc-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== GEOMETRY: CASTLE AT INDEX ========================
@@ -192,7 +192,7 @@
 	(up-modify-goal point-y c:- stronghold-castle-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== GEOMETRY: CASTLE MAINTAIN AT INDEX ========================
@@ -219,36 +219,36 @@
 	(up-modify-goal point-y c:- stronghold-castle-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
 ; ======================== PICK LONGEST GATE SIDE ========================
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-east)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point3-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point3-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-north)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point3-x point2-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point4-x point3-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point4-x point3-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-west)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point4-x point3-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GATE WALL STUB (PALISADE) ========================
 (defrule
@@ -307,11 +307,23 @@
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+=>
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: gate-class c: 4)
+	(up-filter-distance c: -1 c: 4)
+	(up-get-search-state local-total)
+	(up-modify-goal mem-stronghold-local-gates g:= local-total))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-access)
 	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
-	(building-type-count-total gate >= 1)
+	(up-compare-goal mem-stronghold-local-gates >= 1)
 =>
 	(set-goal mem-stronghold-seg stronghold-seg-done))
 
@@ -407,7 +419,7 @@
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-access)
 	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
-	(building-type-count-total gate >= 1)
+	(up-compare-goal mem-stronghold-local-gates >= 1)
 =>
 	(set-goal mem-stronghold-seg stronghold-seg-done))
 
@@ -883,7 +895,7 @@
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-access)
 	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
-	(building-type-count-total gate >= 1)
+	(up-compare-goal mem-stronghold-local-gates >= 1)
 =>
 	(set-goal mem-stronghold-seg stronghold-seg-done))
 

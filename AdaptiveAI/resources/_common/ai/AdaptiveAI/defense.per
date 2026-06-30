@@ -212,38 +212,38 @@
 	(up-modify-goal point-y c:- wall-box-padding)
 	(up-get-point-distance point4-x point-x point-distance)
 	(set-goal mem-compound-gate-side wall-side-south)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== PICK LONGEST TC GATE SIDE ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments == wall-side-south)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-east)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments == wall-side-south)
-	(up-get-point-distance point3-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point3-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-north)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point3-x point2-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments == wall-side-south)
-	(up-get-point-distance point4-x point3-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point4-x point3-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-west)
-	(set-goal mem-compound-side-len g:= point-distance))
+	(up-get-point-distance point4-x point3-x point-distance)
+	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GEOMETRY: MAIN CHOKE (SITE 1) ========================
 (defrule
@@ -285,8 +285,7 @@
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:< wall-gate-min-tiles)
+	(up-point-distance point-x point2-x g:< wall-gate-min-tiles)
 =>
 	(set-goal mem-wall-segments wall-choke-seg-left))
 
@@ -295,8 +294,7 @@
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:>= wall-gate-min-tiles)
+	(up-point-distance point-x point2-x g:>= wall-gate-min-tiles)
 	(not (up-point-contains saved-point-x c: wall-class))
 	(wood-amount >= wall-segment-wood)
 	(up-can-build-line 0 saved-point-x c: palisade-wall)
@@ -326,8 +324,7 @@
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:>= wall-gate-min-tiles)
+	(up-point-distance point-x point2-x g:>= wall-gate-min-tiles)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
 	(up-compare-goal mem-gate-align == 0)
