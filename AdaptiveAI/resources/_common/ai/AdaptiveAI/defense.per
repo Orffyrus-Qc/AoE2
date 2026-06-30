@@ -66,10 +66,34 @@
 	(up-compare-goal mem-wall-phase != wall-phase-done)
 	(goal inseln no)
 	(game-time < wall-time-max)
-(or	(up-compare-goal mem-detected-opening == opening-drush)
+	(up-compare-goal mem-detected-opening == opening-drush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
 	(up-compare-goal mem-detected-opening == opening-scout-rush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
 	(up-compare-goal mem-detected-opening == opening-archer-rush)
-	(up-compare-goal mem-detected-opening == opening-maa-flush))
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening == opening-maa-flush)
 =>
 	(set-goal mem-wall-active 1))
 
@@ -437,8 +461,8 @@
 	(up-compare-goal mem-wall-segments >= wall-choke-seg-left)
 	(up-compare-goal mem-wall-stuck < wall-gate-retry-max)
 (or	(up-point-contains saved-point-x c: tree-class)
-	(up-point-contains point-x c: tree-class)
-	(up-point-contains point2-x c: tree-class))
+(or	(up-point-contains point-x c: tree-class)
+	(up-point-contains point2-x c: tree-class)))
 =>
 	(up-modify-goal mem-wall-stuck c:+ 1)
 	(up-lerp-tiles saved-point-x position-self-x c: 1))

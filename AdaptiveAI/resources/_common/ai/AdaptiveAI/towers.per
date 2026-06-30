@@ -56,8 +56,8 @@
 	(goal inseln no)
 	(game-time < tower-time-max)
 (or	(up-compare-goal mem-detected-opening == opening-drush)
-	(up-compare-goal mem-detected-opening == opening-scout-rush)
-	(up-compare-goal mem-detected-opening == opening-maa-flush))
+(or	(up-compare-goal mem-detected-opening == opening-scout-rush)
+	(up-compare-goal mem-detected-opening == opening-maa-flush)))
 	(current-age >= feudal-age)
 =>
 	(set-goal mem-tower-def-active 1)
