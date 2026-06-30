@@ -108,11 +108,12 @@
 	(set-strategic-number sn-target-evaluation-randomness 0))
 
 ; ======================== CLOSEST-TARGET RETARGET (NO CHASE) ========================
-; Scan nearest enemies around the main army blob; skip raid/explore/build groups.
+; Split across phased rules — AoE2 max ~40 actions per rule (ERR6002).
 (defrule
 	(goal attacking yes)
 	(strategic-number sn-five-turns == 2)
 	(military-population >= group-rally-min)
+	(up-compare-goal temporary-goal != 1)
 =>
 	(up-full-reset-search)
 	(up-filter-exclude -1 actionid-explore orderid-explore -1)
@@ -123,9 +124,6 @@
 	(up-find-local c: knight-line c: 80)
 	(up-find-local c: spearman-line c: 80)
 	(up-find-local c: militiaman-line c: 80)
-	(up-find-local c: eagle-warrior-line c: 40)
-	(up-find-local c: battle-elephant c: 20)
-	(up-find-local c: steppe-lancer-line c: 40)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
@@ -136,6 +134,13 @@
 	(up-clean-search search-local object-data-distance search-order-desc)
 	(up-set-target-object search-local c: 0)
 	(up-get-point position-object point2-x)
+	(set-goal temporary-goal 1))
+
+(defrule
+	(goal attacking yes)
+	(strategic-number sn-five-turns == 2)
+	(up-compare-goal temporary-goal == 1)
+=>
 	(up-full-reset-search)
 	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
 	(up-set-target-point point2-x)
@@ -146,15 +151,14 @@
 	(up-find-remote c: knight-line c: 24)
 	(up-find-remote c: cavalry-archer-line c: 24)
 	(up-find-remote c: spearman-line c: 24)
-	(up-find-remote c: eagle-warrior-line c: 12)
-	(up-find-remote c: battle-elephant c: 8)
 	(up-find-remote c: monk c: 8)
-	(up-filter-distance c: -1 c: attack-retarget-radius))
+	(up-filter-distance c: -1 c: attack-retarget-radius)
+	(set-goal temporary-goal 2))
 
 (defrule
 	(goal attacking yes)
 	(strategic-number sn-five-turns == 2)
-	(military-population >= group-rally-min)
+	(up-compare-goal temporary-goal == 2)
 	(up-compare-goal remote-total > 0)
 =>
 	(up-find-local c: scout-cavalry-line c: 80)
@@ -164,16 +168,28 @@
 	(up-find-local c: knight-line c: 80)
 	(up-find-local c: spearman-line c: 80)
 	(up-find-local c: militiaman-line c: 80)
-	(up-find-local c: eagle-warrior-line c: 40)
-	(up-find-local c: battle-elephant c: 20)
-	(up-find-local c: steppe-lancer-line c: 40)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
-	(up-target-objects 0 action-default -1 stance-aggressive))
+	(up-target-objects 0 action-default -1 stance-aggressive)
+	(set-goal temporary-goal 0))
+
+(defrule
+	(goal attacking yes)
+	(strategic-number sn-five-turns == 2)
+	(up-compare-goal temporary-goal == 2)
+	(up-compare-goal remote-total <= 0)
+=>
+	(set-goal temporary-goal 0))
+
+(defrule
+	(up-compare-goal attacking != yes)
+	(up-compare-goal temporary-goal > 0)
+=>
+	(set-goal temporary-goal 0))
 
 ; Undo spread-mode during pushes (causes linear streaming)
 (defrule
