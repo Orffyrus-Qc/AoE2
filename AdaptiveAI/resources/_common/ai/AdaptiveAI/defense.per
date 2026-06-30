@@ -411,8 +411,19 @@
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments >= wall-seg-tc-done)
+	(up-compare-goal villagercount g:< isolate-proactive-vills)
 =>
 	(set-goal mem-wall-site wall-site-choke-main)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments >= wall-seg-tc-done)
+	(up-compare-goal villagercount >= isolate-proactive-vills)
+=>
+	(set-goal mem-wall-site wall-site-res-lumber)
 	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 

@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v3.1 - Economy: age-up food first, then fortify wood/stone
+; AdaptiveAI v4.0 - Economy: loud boom + stone for multi-TC compounds
 ; Keeps villager momentum; limits gold/stone over-commit during growth.
 ;==============================================================================
 
@@ -18,6 +18,15 @@
 	(up-compare-goal villagercount < eco-boom-vills-castle)
 	(goal trainvillager no)
 	(food-amount >= 200)
+=>
+	(set-goal trainvillager yes))
+
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(current-age >= castle-age)
+	(up-compare-goal villagercount < eco-boom-vills-loud)
+	(goal trainvillager no)
+	(food-amount >= 250)
 =>
 	(set-goal trainvillager yes))
 
@@ -129,9 +138,19 @@
 	(current-age >= castle-age)
 	(stone-amount < fort-stone-min)
 (or	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
+	(up-compare-goal mem-compound-stone-pass g:< mem-stronghold-tc-count)))
+	(strategic-number sn-stone-gatherer-percentage < eco-stone-stronghold-pct)
+=>
+	(set-strategic-number sn-stone-gatherer-percentage eco-stone-stronghold-pct)
+	(set-strategic-number sn-gold-gatherer-percentage 8))
+
+(defrule
+	(current-age >= castle-age)
+	(stone-amount < fort-stone-min)
 (or	(up-compare-goal mem-wall-tier >= wall-tier-stone)
 (or	(up-pending-objects c: stone-wall >= 1)
-	(up-pending-objects c: stone-gate1 >= 1))))
+	(up-pending-objects c: stone-gate1 >= 1)))
 	(strategic-number sn-stone-gatherer-percentage < eco-stone-stronghold-pct)
 =>
 	(set-strategic-number sn-stone-gatherer-percentage eco-stone-stronghold-pct)

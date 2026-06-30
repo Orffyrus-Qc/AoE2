@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v1.3 - Superiority governor (when to press, turtle, or release)
+; AdaptiveAI v4.0 - Superiority governor (press harder when ahead)
 ;==============================================================================
 
 ; Reset peace timer while under attack
@@ -77,3 +77,17 @@
 =>
 	(set-goal mem-rally-army 1)
 	(set-goal attackmethod groups))
+
+; Loud mode: press when compounds are ready and we have army
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(up-compare-goal mem-fortify-ready == 1)
+	(up-compare-goal attacking != yes)
+	(up-compare-goal mem-attack-sustain != 1)
+	(current-age >= castle-age)
+	(military-population >= group-castle-min)
+	(strategic-number sn-military-superiority >= superior-behind)
+=>
+	(set-goal mem-rally-army 1)
+	(set-goal attackmethod groups)
+	(set-goal mem-tower-off-active 1))

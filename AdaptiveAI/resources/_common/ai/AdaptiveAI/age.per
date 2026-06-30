@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v3.1 - Age upgrades: highest priority (feudal → castle → imperial)
+; AdaptiveAI v4.0 - Age upgrades + aggressive multi-TC drop
 ; Escrow research every tick; food focus while an age is available but pending.
 ;==============================================================================
 
@@ -83,6 +83,26 @@
 	(can-build-with-escrow town-center)
 	(wood-amount >= 275)
 	(stone-amount >= 100)
+=>
+	(build town-center))
+
+(defrule
+	(current-age >= castle-age)
+	(building-type-count town-center < 3)
+	(can-build-with-escrow town-center)
+	(wood-amount >= 275)
+	(stone-amount >= 100)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+=>
+	(build town-center))
+
+(defrule
+	(current-age >= imperial-age)
+	(building-type-count town-center < 4)
+	(can-build-with-escrow town-center)
+	(wood-amount >= 275)
+	(stone-amount >= 100)
+	(up-compare-goal villagercount >= eco-boom-vills-loud)
 =>
 	(build town-center))
 

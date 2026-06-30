@@ -6,9 +6,29 @@
 (defrule
 	(up-compare-goal mem-fortify-ready != 1)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
 	(building-type-count-total gate >= wall-gate-target)
-	(building-type-count palisade-wall >= wall-complete-palisade)
+	(building-type-count-total stone-wall-line >= wall-complete-stone)
 	(building-type-count-total tower-class >= preattack-towers-min)
+=>
+	(set-goal mem-fortify-ready 1))
+
+(defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(building-type-count-total gate >= wall-gate-target)
+(or	(building-type-count palisade-wall >= wall-complete-palisade)
+	(building-type-count-total stone-wall-line >= wall-complete-stone))
+	(building-type-count-total tower-class >= preattack-towers-min)
+=>
+	(set-goal mem-fortify-ready 1))
+
+(defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
+	(building-type-count-total gate >= mem-stronghold-tc-count)
+	(building-type-count-total tower-class >= preattack-towers-fallback)
 =>
 	(set-goal mem-fortify-ready 1))
 
@@ -74,13 +94,24 @@
 	(set-goal mem-attack-recover 0)
 	(set-goal mem-attack-recover-until 0))
 
-; ======================== COMMIT: MAX ARMY + FORTIFY DONE ========================
+; ======================== COMMIT: 90% ARMY + FORTIFY DONE ========================
 (defrule
 	(up-compare-goal mem-attack-lock == 1)
 	(up-compare-goal mem-attack-sustain != 1)
 	(up-compare-goal mem-attack-recover != 1)
 	(up-compare-goal mem-fortify-ready == 1)
-	(up-compare-goal my-mpop g:>= allowed-num-military)
+	(current-age >= feudal-age)
+=>
+	(up-modify-goal temporary-goal2 g:= allowed-num-military)
+	(up-modify-goal temporary-goal2 c:* preattack-commit-pct-num)
+	(up-modify-goal temporary-goal2 c:/ preattack-commit-pct-den))
+
+(defrule
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-attack-recover != 1)
+	(up-compare-goal mem-fortify-ready == 1)
+	(up-compare-goal my-mpop g:>= temporary-goal2)
 	(current-age >= feudal-age)
 =>
 	(set-goal mem-attack-lock 0)

@@ -99,6 +99,8 @@
 (defconst mem-compound-side-len 1980)
 (defconst mem-explore-retreat 1981)
 (defconst mem-explore-threat-near 1982)
+(defconst mem-orchestrator-arm 1983)
+(defconst mem-compound-stone-pass 1984)
 
 (defconst gate-align-none -1)
 
@@ -200,6 +202,9 @@
 (defconst preattack-fortify-timeout 1200)
 (defconst preattack-recover-mpop-num 3)
 (defconst preattack-recover-mpop-den 4)
+(defconst preattack-commit-pct-num 9)
+(defconst preattack-commit-pct-den 10)
+(defconst wall-complete-stone 12)
 
 ; --- Forward raids: builders + escort near enemy; strike + patrol split army ---
 (defconst raid-patrol-group 14)
@@ -352,6 +357,7 @@
 (defconst stronghold-mode-castle 2)
 (defconst stronghold-mode-maintain 3)
 (defconst stronghold-mode-maintain-castle 4)
+(defconst stronghold-mode-stone-upgrade 5)
 (defconst stronghold-seg-setup 0)
 (defconst stronghold-seg-wall-south 1)
 (defconst stronghold-seg-wall-east 2)
@@ -420,10 +426,11 @@
 (defconst eco-fortify-wood-priority 48)
 (defconst eco-boom-vills-feudal 22)
 (defconst eco-boom-vills-castle 30)
+(defconst eco-boom-vills-loud 38)
 (defconst eco-boom-food-min 450)
 (defconst eco-boom-wood-min 200)
 (defconst eco-fortify-time-min 240)
 (defconst eco-stone-vills-max 4)
-(defconst eco-stone-stronghold-pct 18)
+(defconst eco-stone-stronghold-pct 22)
 (defconst eco-stone-trade-gold-min 300)
 (defconst eco-stone-mine-wood-min 100)

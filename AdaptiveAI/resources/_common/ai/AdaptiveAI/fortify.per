@@ -1,9 +1,15 @@
 ;==============================================================================
-; AdaptiveAI v2.9 - Progressive fortification (priority over boom/raid)
+; AdaptiveAI v4.0 - Progressive fortification (outer rings after TC compounds)
 ; Extends defense + towers with more sites, stone tiers, and repeating waves.
 ;==============================================================================
 
 ; ======================== WALL TIER BY AGE (only with stable eco) ========================
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-tier < wall-tier-stone)
+=>
+	(set-goal mem-wall-tier wall-tier-stone))
+
 (defrule
 	(current-age >= castle-age)
 	(up-compare-goal villagercount >= eco-boom-vills-castle)

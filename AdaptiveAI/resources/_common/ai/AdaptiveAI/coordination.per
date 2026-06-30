@@ -1,7 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v3.1 - Cross-module coordination (harmonizes tactics)
-; Resolves conflicts between explore, fortify, stronghold, raid, and military.
-; Age.per loads after this file for final age-up priority.
+; AdaptiveAI v4.0 - Cross-module coordination (TC compounds trump outer fortify)
 ;==============================================================================
 
 ; ======================== WALL NEW TOWN CENTERS FIRST ========================
@@ -10,7 +8,9 @@
 	(current-age >= feudal-age)
 	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
 	(up-compare-goal mem-stronghold-active != 1)
-	(wood-amount >= wall-segment-wood)
+(or	(wood-amount >= wall-segment-wood)
+	(and	(current-age >= castle-age)
+		(stone-amount >= fort-stone-min)))
 =>
 	(set-goal mem-stronghold-active 1)
 	(set-goal mem-stronghold-mode stronghold-mode-tc)
@@ -66,6 +66,7 @@
 	(game-time < wall-time-max)
 	(up-compare-goal mem-fortify-ready == 1)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
 	(up-compare-goal mem-wall-active != 1)
 	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
 	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
@@ -78,45 +79,31 @@
 	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
-; ======================== FORTIFY BEFORE RAID PICK ========================
+; ======================== RAID AFTER FIRST TC COMPOUND ========================
 (defrule
 	(up-compare-goal mem-fortify-ready != 1)
 	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-stronghold-tc-done < 1)
 	(current-age >= feudal-age)
 =>
 	(set-goal mem-raid-pick 0))
 
-; ======================== PRIORITY: WALLS + GATES + TOWERS (FEUDAL+) ========================
+; ======================== PRIORITY: WALLS + TOWERS (AFTER ALL TC COMPOUNDS) ========================
 (defrule
 	(goal inseln no)
 	(current-age >= feudal-age)
 	(up-compare-goal mem-fortify-ready != 1)
 	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
 	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= wall-segment-wood)
 (or	(up-compare-goal mem-wall-active != 1)
-(or	(up-compare-goal mem-stronghold-active != 1)
-	(up-compare-goal mem-tower-def-active != 1)))
+	(up-compare-goal mem-tower-def-active != 1))
 =>
 	(set-goal mem-wall-active 1)
 	(set-goal mem-tower-def-active 1)
 	(set-goal mem-tower-def-slot 0)
 	(set-goal mem-tower-stuck 0))
-
-(defrule
-	(goal inseln no)
-	(current-age >= feudal-age)
-	(up-compare-goal mem-fortify-ready != 1)
-	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
-	(up-compare-goal mem-stronghold-active != 1)
-	(wood-amount >= wall-segment-wood)
-=>
-	(set-goal mem-stronghold-active 1)
-	(set-goal mem-stronghold-mode stronghold-mode-tc)
-	(up-modify-goal mem-stronghold-index g:= mem-stronghold-tc-done)
-	(set-goal mem-stronghold-seg stronghold-seg-setup)
-	(set-goal mem-stronghold-gate-type wall-gate-type0)
-	(set-goal mem-wall-stuck 0))
 
 ; ======================== KEEP TOWERS GOING UNTIL FORT CAP ========================
 (defrule

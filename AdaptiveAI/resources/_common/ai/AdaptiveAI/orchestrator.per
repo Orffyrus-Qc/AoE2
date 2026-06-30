@@ -1,0 +1,115 @@
+;==============================================================================
+; AdaptiveAI v4.0 - Master orchestrator: all modules active, loud tempo
+; Arms explore/intel/fortify/stronghold/raid/towers/military as one system.
+;==============================================================================
+
+; ======================== ARM FULL ADAPTIVE STACK (FEUDAL+) ========================
+(defrule
+	(current-age >= feudal-age)
+	(goal inseln no)
+	(up-compare-goal mem-orchestrator-arm != 1)
+=>
+	(set-goal mem-orchestrator-arm 1)
+	(set-goal trainvillager yes)
+	(set-goal mem-explore-active 1)
+	(set-strategic-number sn-attack-intelligence 1)
+	(set-strategic-number sn-attack-winning-player 1)
+	(set-strategic-number sn-percent-enemy-sighted-response 100)
+	(set-strategic-number sn-coop-share-attacking 1))
+
+; Stone walls for every TC compound once castle age hits
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-tier < wall-tier-stone)
+=>
+	(set-goal mem-wall-tier wall-tier-stone))
+
+; ======================== TC COMPOUNDS BEFORE OUTER FORTIFY ========================
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
+	(up-compare-goal mem-stronghold-active != 1)
+(or	(wood-amount >= wall-segment-wood)
+	(and	(current-age >= castle-age)
+		(stone-amount >= fort-stone-min)))
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-tc)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-tc-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+; Upgrade feudal palisade rings to stone (one TC index per pass)
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(goal inseln no)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-active != 1)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
+	(up-compare-goal mem-compound-stone-pass g:< mem-stronghold-tc-count)
+	(stone-amount >= fort-stone-min)
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-stone-upgrade)
+	(up-modify-goal mem-stronghold-index g:= mem-compound-stone-pass)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== WIRE ISOLATE (RESOURCE DROP BOXES) ========================
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments >= wall-seg-tc-done)
+	(up-compare-goal villagercount >= isolate-proactive-vills)
+=>
+	(set-goal mem-wall-site wall-site-res-lumber)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== KEEP MODULES ARMED ========================
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(current-age >= feudal-age)
+	(goal inseln no)
+	(up-compare-goal mem-explore-active != 1)
+	(up-compare-goal mem-attack-sustain != 1)
+=>
+	(set-goal mem-explore-active 1))
+
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-fortify-ready != 1)
+	(wood-amount >= wall-segment-wood)
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0))
+
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(current-age >= castle-age)
+	(goal attacking yes)
+	(stone-amount >= tower-stone-min)
+	(up-compare-goal mem-tower-off-active != 1)
+=>
+	(set-goal mem-tower-off-active 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal trainbombard yes))
+
+; Loud push: shorten zero-priority distance so armies engage faster
+(defrule
+	(up-compare-goal mem-orchestrator-arm == 1)
+	(up-compare-goal mem-attack-sustain == 1)
+=>
+	(set-strategic-number sn-percent-attack-soldiers 100)
+	(set-strategic-number sn-number-attack-groups 1000)
+	(set-strategic-number sn-zero-priority-distance 180))
