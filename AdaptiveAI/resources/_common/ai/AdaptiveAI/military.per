@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v3.1 - Unified mixed blobs + safe-area army staging
+; AdaptiveAI v3.4 - Unified mixed blobs + closest-target attack (no chase)
 ; 1) Anti-TSA stream   2) Age-scaled waves   3) Opening/adapt profiles
 ; 4) Siege+escort     5) Defend groups      6) Pre-attack rally
 ;==============================================================================
@@ -93,7 +93,87 @@
 	(set-strategic-number sn-gather-defense-units 0)
 	(set-strategic-number sn-gather-idle-soldiers-at-center 0)
 	(set-strategic-number sn-group-form-distance group-form-normal)
-	(set-strategic-number sn-attack-group-gather-spacing group-spacing-normal))
+	(set-strategic-number sn-attack-group-gather-spacing group-spacing-normal)
+	(set-strategic-number sn-group-leader-defense-distance attack-chase-max)
+	(set-strategic-number sn-target-evaluation-distance attack-target-dist-bonus)
+	(set-strategic-number sn-target-evaluation-randomness 0)
+	(set-goal retargetenemy yes))
+
+; Restore default pursuit / target weights when not pushing
+(defrule
+	(up-compare-goal attacking != yes)
+=>
+	(set-strategic-number sn-group-leader-defense-distance group-leader-defense)
+	(set-strategic-number sn-target-evaluation-distance 0)
+	(set-strategic-number sn-target-evaluation-randomness 0))
+
+; ======================== CLOSEST-TARGET RETARGET (NO CHASE) ========================
+; Scan nearest enemies around the main army blob; skip raid/explore/build groups.
+(defrule
+	(goal attacking yes)
+	(strategic-number sn-five-turns == 2)
+	(military-population >= group-rally-min)
+=>
+	(up-full-reset-search)
+	(up-filter-exclude -1 actionid-explore orderid-explore -1)
+	(up-find-local c: scout-cavalry-line c: 80)
+	(up-find-local c: archer-line c: 80)
+	(up-find-local c: skirmisher-line c: 80)
+	(up-find-local c: cavalry-archer-line c: 80)
+	(up-find-local c: knight-line c: 80)
+	(up-find-local c: spearman-line c: 80)
+	(up-find-local c: militiaman-line c: 80)
+	(up-find-local c: eagle-warrior-line c: 40)
+	(up-find-local c: battle-elephant c: 20)
+	(up-find-local c: steppe-lancer-line c: 40)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point2-x)
+	(up-find-remote c: militiaman-line c: 24)
+	(up-find-remote c: archer-line c: 24)
+	(up-find-remote c: skirmisher-line c: 24)
+	(up-find-remote c: scout-cavalry-line c: 24)
+	(up-find-remote c: knight-line c: 24)
+	(up-find-remote c: cavalry-archer-line c: 24)
+	(up-find-remote c: spearman-line c: 24)
+	(up-find-remote c: eagle-warrior-line c: 12)
+	(up-find-remote c: battle-elephant c: 8)
+	(up-find-remote c: monk c: 8)
+	(up-filter-distance c: -1 c: attack-retarget-radius))
+
+(defrule
+	(goal attacking yes)
+	(strategic-number sn-five-turns == 2)
+	(military-population >= group-rally-min)
+	(up-compare-goal remote-total > 0)
+=>
+	(up-find-local c: scout-cavalry-line c: 80)
+	(up-find-local c: archer-line c: 80)
+	(up-find-local c: skirmisher-line c: 80)
+	(up-find-local c: cavalry-archer-line c: 80)
+	(up-find-local c: knight-line c: 80)
+	(up-find-local c: spearman-line c: 80)
+	(up-find-local c: militiaman-line c: 80)
+	(up-find-local c: eagle-warrior-line c: 40)
+	(up-find-local c: battle-elephant c: 20)
+	(up-find-local c: steppe-lancer-line c: 40)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-target-objects 0 action-default -1 stance-aggressive))
 
 ; Undo spread-mode during pushes (causes linear streaming)
 (defrule
