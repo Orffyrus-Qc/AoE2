@@ -26,6 +26,7 @@
 	(building-type-count-total gate >= wall-gate-target)
 	(building-type-count palisade-wall >= wall-complete-palisade)
 	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(up-compare-goal mem-wall-site < wall-site-outer1)
 =>
 	(set-goal mem-wall-phase wall-phase-done)
 	(set-goal mem-wall-active 0))
@@ -342,9 +343,10 @@
 	(set-goal mem-wall-phase wall-phase-done)
 	(set-goal mem-wall-active 0))
 
-; ======================== FINISH WHEN ENOUGH BUILT ========================
+; ======================== FINISH BASE WALLS (NOT EXTENDED FORTIFY WAVES) ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site < wall-site-outer1)
 	(building-type-count palisade-wall >= wall-complete-palisade)
 	(building-type-count-total gate >= wall-gate-target)
 =>

@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v1.9)
+## AdaptiveAI (v2.0)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -19,7 +19,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Defense** | **TC palisade box + gate**, resource-site boxes, then **forward choke walls with gates**. |
 | **Isolate** | Walls and gates around lumber camp, mill, and mining camp (skips missing dropsites). |
 | **Towers** | Defensive towers on TC flanks + resource sites; forward waves at slots 6–8 after isolation. |
-| **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. |
+| **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. **Surplus wood** → more palisade walls/gates; **surplus stone** → more stone walls/gates (up to caps). |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → defend until **max military pop** → **sustain push** until army is **halved**, then rebuild. |
 | **Raid** | Side raids on **mills, farms, livestock, villagers**; stays **16+ tiles** from enemy TC/castle and **11+** from towers. Raiders **flank around** the direct path and **avoid bigger enemy groups** en route. **Builders** drop **watch towers** (feudal) or **castles** (castle age) near food targets; a **small escort** guards the site while main raiders keep hitting food. Retargets when pressured or ambushed. |
@@ -107,6 +107,7 @@ Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal
 
 ### Version history (high level)
 
+- **v2.0** — Surplus wood/stone triggers extra palisade or stone wall + gate waves until fort caps.
 - **v1.9** — Raiders flank indirect routes and dodge bigger enemy groups on the path; retreat/retarget if ambushed.
 - **v1.8** — Forward watch towers/castles near food raid targets; builder villagers + escort guard; main raiders keep hitting food.
 - **v1.7** — Food raids on mills/farms/vills; avoid TC/castle/tower range; retarget when pressured.

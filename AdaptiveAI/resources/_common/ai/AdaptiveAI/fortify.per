@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v1.1 - Progressive fortification (walls/gates/towers through game)
+; AdaptiveAI v2.0 - Progressive fortification + surplus wood/stone wall waves
 ; Extends defense + towers with more sites, stone tiers, and repeating waves.
 ;==============================================================================
 
@@ -82,6 +82,50 @@
 	(set-goal mem-tower-off-slot 0)
 	(set-goal mem-tower-stuck 0)
 	(set-goal trainbombard yes))
+
+; ======================== SURPLUS WOOD: MORE PALISADE WALLS/GATES ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+	(food-amount >= eco-boom-food-min)
+	(wood-amount >= fort-wood-surplus)
+	(building-type-count-total gate < fort-gate-cap)
+	(building-type-count-total wall-class < fort-wall-cap)
+(or	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(stone-amount < fort-stone-surplus))
+=>
+	(set-goal mem-wall-tier wall-tier-palisade)
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0)
+	(set-goal mem-fort-wave 0))
+
+; ======================== SURPLUS STONE: MORE STONE WALLS/GATES ========================
+(defrule
+	(goal inseln no)
+	(current-age >= castle-age)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+	(food-amount >= eco-boom-food-min)
+	(stone-amount >= fort-stone-surplus)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(building-type-count-total gate < fort-gate-cap)
+	(building-type-count-total wall-class < fort-wall-cap)
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0)
+	(set-goal mem-fort-wave 0))
 
 ; ======================== EXTENDED CHOKE GEOMETRY (SITES 3-6) ========================
 (defrule
@@ -256,11 +300,39 @@
 	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
+; Surplus resources: restart forward waves instead of stopping at wave cap
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-fort-wave >= fort-wave-max)
-(or	(building-type-count-total gate >= fort-gate-cap)
-	(building-type-count-total wall-class >= fort-wall-cap))
+	(building-type-count-total gate < fort-gate-cap)
+	(building-type-count-total wall-class < fort-wall-cap)
+(or	(wood-amount >= fort-wood-surplus)
+	(stone-amount >= fort-stone-surplus))
+=>
+	(set-goal mem-fort-wave 0)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count-total gate >= fort-gate-cap)
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count-total wall-class >= fort-wall-cap)
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-fort-wave >= fort-wave-max)
+	(wood-amount < fort-wood-surplus)
+	(stone-amount < fort-stone-surplus)
 =>
 	(set-goal mem-wall-phase wall-phase-done)
 	(set-goal mem-wall-active 0))
