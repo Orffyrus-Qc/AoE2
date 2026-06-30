@@ -13,6 +13,13 @@
 	(set-goal mem-wall-tier wall-tier-stone))
 
 (defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-wall-tier < wall-tier-stone)
+=>
+	(set-goal mem-wall-tier wall-tier-stone))
+
+(defrule
 	(current-age >= imperial-age)
 	(up-compare-goal mem-wall-tier < wall-tier-fortified)
 	(building-type-count-total stone-wall-line >= 8)

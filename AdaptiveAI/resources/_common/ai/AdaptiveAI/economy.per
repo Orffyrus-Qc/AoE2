@@ -87,6 +87,9 @@
 		(up-research-status c: castle-age < research-complete)))
 	(not (and	(current-age == castle-age)
 		(up-research-status c: imperial-age < research-complete)))
+	(not (and	(stone-amount < fort-stone-min)
+(or	(up-compare-goal mem-stronghold-active == 1)
+		(up-compare-goal mem-wall-tier >= wall-tier-stone))))
 =>
 	(set-strategic-number sn-wood-gatherer-percentage eco-fortify-wood-priority)
 	(set-strategic-number sn-food-gatherer-percentage 42)
@@ -120,6 +123,42 @@
 	(strategic-number sn-stone-gatherer-percentage < eco-stone-rush-pct)
 =>
 	(set-strategic-number sn-stone-gatherer-percentage eco-stone-rush-pct))
+
+; Stone rush: TC/castle stronghold compounds and stone wall tiers
+(defrule
+	(current-age >= castle-age)
+	(stone-amount < fort-stone-min)
+(or	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+(or	(up-pending-objects c: stone-wall >= 1)
+	(up-pending-objects c: stone-gate1 >= 1))))
+	(strategic-number sn-stone-gatherer-percentage < eco-stone-stronghold-pct)
+=>
+	(set-strategic-number sn-stone-gatherer-percentage eco-stone-stronghold-pct)
+	(set-strategic-number sn-gold-gatherer-percentage 8))
+
+(defrule
+	(current-age >= feudal-age)
+	(stone-amount < fort-stone-min)
+(or	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone))
+	(building-type-count mining-camp < 1)
+	(can-build-with-escrow mining-camp)
+	(wood-amount >= eco-stone-mine-wood-min)
+=>
+	(build mining-camp))
+
+(defrule
+	(current-age >= castle-age)
+	(stone-amount < fort-stone-min)
+(or	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(up-pending-objects c: stone-wall >= 1)))
+	(building-type-count market >= 1)
+	(gold-amount >= eco-stone-trade-gold-min)
+	(can-buy-commodity stone)
+=>
+	(buy-commodity stone))
 
 ; Release economy bias once boom targets are met (not during active fortify)
 (defrule
