@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v2.3)
+## AdaptiveAI (v2.4)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -25,7 +25,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → prep/stage → **max-pop commit** → **sustain push** until half losses → **90s recover** → repeat. |
 | **Coordination** | Loads last: pauses raids during main push, re-fortifies when raided, preserves counter modes, unblocks surplus building. |
-| **Raid** | Side raids on **mills, farms, livestock, villagers**; stays **16+ tiles** from enemy TC/castle and **11+** from towers. Raiders **flank around** the direct path and **avoid bigger enemy groups** en route. **Builders** drop **watch towers** (feudal) or **castles** (castle age) near food targets; a **small escort** guards the site while main raiders keep hitting food. Retargets when pressured or ambushed. |
+| **Raid** | Side raids on **mills, farms, livestock, villagers** after explore intel. Raiders **flank** and **avoid bigger enemy groups**. **Builders** at food sites try **forward TC → castle → tower → stone gate → stone wall** (first valid build wins). Escort guards the site. Retargets when pressured. |
 
 Adaptation is **silent** — no in-game chat spam from the adaptive layer.
 
@@ -110,6 +110,7 @@ Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal
 
 ### Version history (high level)
 
+- **v2.4** — New TC compounds prioritized (incl. foundations); raid builders place forward TC/tower/castle/stone wall/gate.
 - **v2.3** — Army explore patrol + enemy position monitor; raids dispatch only after enemy/food intel (8‑min fallback).
 - **v2.2** — Stronghold compounds: wall every TC/castle with 4 gates; repair damaged walls/gates; rebuild missing segments (timer + under attack).
 - **v2.1** — Tactical coordination: attack recover phase, raids only in prep, response won't block surplus fortify, tower/wall completion fixes.

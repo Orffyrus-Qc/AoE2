@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.2 - Stronghold compounds: wall every TC/castle, multi-gate,
-; repair damaged walls/gates, rebuild missing segments.
+; AdaptiveAI v2.4 - Stronghold compounds: wall every TC/castle (incl. new TC),
+; multi-gate perimeter, repair/rebuild missing segments.
 ;==============================================================================
 
 ; ======================== ENABLE WALL/GATE REPAIR ========================
@@ -16,6 +16,7 @@
 =>
 	(up-full-reset-search)
 	(up-find-local c: town-center c: 8)
+	(up-find-local c: town-center-foundation c: 4)
 	(up-get-search-state local-total)
 	(up-modify-goal mem-stronghold-tc-count g:= local-total))
 
@@ -51,6 +52,23 @@
 	(up-compare-goal mem-stronghold-tc-done >= 1)
 	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
 	(wood-amount >= wall-start-wood)
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-tc)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-tc-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+; Preempt maintain/repair when a new TC still needs its compound
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
+	(wood-amount >= wall-segment-wood)
+(or	(up-compare-goal mem-stronghold-active != 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)))
 =>
 	(set-goal mem-stronghold-active 1)
 	(set-goal mem-stronghold-mode stronghold-mode-tc)

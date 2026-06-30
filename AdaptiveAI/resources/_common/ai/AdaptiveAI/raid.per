@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.3 - Food raids after explore intel; flank routes; forward towers
-; Requires enemy/food visibility from explore.per before dispatching raids.
+; AdaptiveAI v2.4 - Food raids after explore intel; forward TC/tower/castle/walls
+; Raid builders claim sites with TC, tower, castle, stone wall, and stone gate.
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -30,6 +30,7 @@
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
 	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-build-step 0)
 	(set-goal mem-raid-has-site 0)
 	(set-goal mem-raid-stuck 0)
 	(set-goal mem-raid-route 0)
@@ -47,6 +48,7 @@
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
 	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-build-step 0)
 	(set-goal mem-raid-has-site 0)
 	(set-goal mem-raid-stuck 0)
 	(set-goal mem-raid-route 0)
@@ -239,6 +241,7 @@
 	(up-copy-point saved-point-x point4-x)
 	(up-lerp-tiles saved-point-x position-self-x c: raid-site-offset)
 	(set-goal mem-raid-build 1)
+	(set-goal mem-raid-build-step raid-build-step-tc)
 	(set-goal mem-raid-has-site 1)
 	(set-goal mem-raid-stuck 0)
 	(up-copy-point temporary-point-x position-self-x)
@@ -402,6 +405,9 @@
 	(up-group-size c: raid-builder-group > 0)
 	(up-pending-objects c: watch-tower < 1)
 	(up-pending-objects c: castle < 1)
+	(up-pending-objects c: town-center < 1)
+	(up-pending-objects c: stone-wall < 2)
+	(up-pending-objects c: stone-gate1 < 1)
 =>
 	(up-copy-point point3-x position-self-x)
 	(up-lerp-percent point3-x saved-point-x c: 55)
@@ -409,10 +415,35 @@
 	(up-set-group search-local c: raid-builder-group)
 	(up-target-point point3-x action-move -1 stance-no-attack))
 
-; ======================== BUILD FORWARD CASTLE (CASTLE AGE) ========================
+; ======================== FORWARD TOWN CENTER ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-tc)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-tc-count g:< raid-forward-tc-max)
+	(up-pending-objects c: town-center < 1)
+	(wood-amount >= raid-tc-wood-min)
+	(stone-amount >= raid-tc-stone-min)
+	(can-build town-center)
+	(up-can-build-line 0 saved-point-x c: town-center)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: town-center)
+	(up-assign-builders c: town-center-foundation c: raid-builder-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-tc)
+=>
+	(set-goal mem-raid-build-step raid-build-step-castle))
+
+; ======================== FORWARD CASTLE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
 	(current-age >= castle-age)
 	(stone-amount >= raid-castle-stone-min)
 	(can-build castle)
@@ -424,15 +455,20 @@
 	(up-assign-builders c: castle c: raid-builder-vills)
 	(set-goal mem-raid-stuck 0))
 
-; ======================== BUILD FORWARD WATCH TOWER (FEUDAL / LOW STONE) ========================
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
+=>
+	(set-goal mem-raid-build-step raid-build-step-tower))
+
+; ======================== FORWARD TOWER (WATCH / GUARD) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-tower)
 	(current-age >= feudal-age)
 	(wood-amount >= tower-wood-min)
 	(up-pending-objects c: watch-tower < 1)
-(or	(current-age <= feudal-age)
-	(stone-amount < raid-castle-stone-min))
 	(up-can-build-line 0 saved-point-x c: watch-tower-building)
 =>
 	(set-strategic-number sn-ignore-tower-elevation 1)
@@ -440,19 +476,85 @@
 	(up-assign-builders c: watch-tower c: raid-builder-vills)
 	(set-goal mem-raid-stuck 0))
 
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-tower)
+=>
+	(set-goal mem-raid-build-step raid-build-step-gate))
+
+; ======================== STONE GATE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-gate1 < 1)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+=>
+	(set-goal mem-raid-build-step raid-build-step-wall))
+
+; ======================== STONE WALL SEGMENT ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+=>
+	(up-copy-point point3-x saved-point-x)
+	(up-lerp-tiles point3-x enemy-x c: 4))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-wall < 2)
+	(up-can-build-line saved-point-x point3-x c: stone-wall)
+=>
+	(up-build-line saved-point-x point3-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+=>
+	(set-goal mem-raid-build-step raid-build-step-done))
+
 ; ======================== FORWARD BUILD DONE / RETRY ========================
 (defrule
 	(up-compare-goal mem-raid-build == 1)
-(or	(up-pending-objects c: watch-tower >= 1)
-	(up-pending-objects c: castle >= 1))
+	(up-compare-goal mem-raid-build-step >= raid-build-step-done)
 =>
-	(set-goal mem-raid-build 0))
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-build-step 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+(or	(up-pending-objects c: watch-tower >= 1)
+(or	(up-pending-objects c: castle >= 1)
+(or	(up-pending-objects c: town-center >= 1)
+(or	(up-pending-objects c: stone-wall >= 1)
+	(up-pending-objects c: stone-gate1 >= 1)))))
+=>
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-build-step 0))
 
 (defrule
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-stuck >= raid-build-stuck-max)
 =>
 	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-build-step 0)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
