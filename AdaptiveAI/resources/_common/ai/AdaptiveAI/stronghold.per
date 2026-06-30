@@ -10,6 +10,23 @@
 	(set-strategic-number sn-object-repair-level 3)
 	(disable-self))
 
+; ======================== TRACK TC/CASTLE COUNTS (goal comparisons) ========================
+(defrule
+	(true)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 8)
+	(up-get-search-state local-total)
+	(up-modify-goal mem-stronghold-tc-count g:= local-total))
+
+(defrule
+	(true)
+=>
+	(up-full-reset-search)
+	(up-find-local c: castle c: 4)
+	(up-get-search-state local-total)
+	(up-modify-goal mem-stronghold-castle-count g:= local-total))
+
 ; ======================== ARM: NEW TOWN CENTER ========================
 (defrule
 	(goal inseln no)
@@ -32,7 +49,7 @@
 	(current-age >= feudal-age)
 	(up-compare-goal mem-stronghold-active != 1)
 	(up-compare-goal mem-stronghold-tc-done >= 1)
-	(up-compare-goal mem-stronghold-tc-done g:< building-type-count town-center)
+	(up-compare-goal mem-stronghold-tc-done g:< mem-stronghold-tc-count)
 	(wood-amount >= wall-start-wood)
 =>
 	(set-goal mem-stronghold-active 1)
@@ -64,7 +81,7 @@
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-active != 1)
 	(up-compare-goal mem-stronghold-castle-done >= 1)
-	(up-compare-goal mem-stronghold-castle-done g:< building-type-count castle)
+	(up-compare-goal mem-stronghold-castle-done g:< mem-stronghold-castle-count)
 (or	(wood-amount >= wall-start-wood)
 	(stone-amount >= fort-stone-min))
 =>
@@ -110,8 +127,8 @@
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-setup)
 (or	(up-compare-goal mem-stronghold-mode == stronghold-mode-tc)
 (and	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
-	(up-compare-goal mem-stronghold-index g:< building-type-count town-center)))
-	(building-type-count town-center >= 1)
+	(up-compare-goal mem-stronghold-index g:< mem-stronghold-tc-count)))
+	(up-compare-goal mem-stronghold-tc-count >= 1)
 =>
 	(up-full-reset-search)
 	(up-find-local c: town-center c: 4)
@@ -469,7 +486,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-tc)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
-	(up-compare-goal mem-stronghold-tc-done g:>= building-type-count town-center)
+	(up-compare-goal mem-stronghold-tc-done g:>= mem-stronghold-tc-count)
 =>
 	(set-goal mem-stronghold-active 0)
 	(set-goal mem-stronghold-mode 0)
@@ -489,7 +506,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
-	(up-compare-goal mem-stronghold-castle-done g:>= building-type-count castle)
+	(up-compare-goal mem-stronghold-castle-done g:>= mem-stronghold-castle-count)
 =>
 	(set-goal mem-stronghold-active 0)
 	(set-goal mem-stronghold-mode 0)
@@ -773,9 +790,9 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
-	(up-compare-goal mem-stronghold-index g:>= building-type-count town-center)
+	(up-compare-goal mem-stronghold-index g:>= mem-stronghold-tc-count)
 	(current-age >= castle-age)
-	(building-type-count castle >= 1)
+	(up-compare-goal mem-stronghold-castle-count >= 1)
 =>
 	(set-goal mem-stronghold-mode stronghold-mode-maintain-castle)
 	(set-goal mem-stronghold-index 0)
@@ -785,7 +802,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
-	(up-compare-goal mem-stronghold-index g:>= building-type-count town-center)
+	(up-compare-goal mem-stronghold-index g:>= mem-stronghold-tc-count)
 =>
 	(set-goal mem-stronghold-active 0)
 	(set-goal mem-stronghold-mode 0)
@@ -796,7 +813,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
-	(up-compare-goal mem-stronghold-index g:>= building-type-count castle)
+	(up-compare-goal mem-stronghold-index g:>= mem-stronghold-castle-count)
 =>
 	(set-goal mem-stronghold-active 0)
 	(set-goal mem-stronghold-mode 0)
