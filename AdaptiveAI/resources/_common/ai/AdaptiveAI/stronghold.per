@@ -1,0 +1,813 @@
+;==============================================================================
+; AdaptiveAI v2.2 - Stronghold compounds: wall every TC/castle, multi-gate,
+; repair damaged walls/gates, rebuild missing segments.
+;==============================================================================
+
+; ======================== ENABLE WALL/GATE REPAIR ========================
+(defrule
+	(true)
+=>
+	(set-strategic-number sn-object-repair-level 3)
+	(disable-self))
+
+; ======================== ARM: NEW TOWN CENTER ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(building-type-count town-center >= 1)
+	(up-compare-goal mem-stronghold-tc-done < 1)
+	(up-compare-goal mem-stronghold-active != 1)
+	(wood-amount >= wall-start-wood)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-tc)
+	(set-goal mem-stronghold-index 0)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-active != 1)
+	(up-compare-goal mem-stronghold-tc-done >= 1)
+	(up-compare-goal mem-stronghold-tc-done g:< building-type-count town-center)
+	(wood-amount >= wall-start-wood)
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-tc)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-tc-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== ARM: CASTLE COMPOUNDS ========================
+(defrule
+	(goal inseln no)
+	(current-age >= castle-age)
+	(building-type-count castle >= 1)
+	(up-compare-goal mem-stronghold-castle-done < 1)
+	(up-compare-goal mem-stronghold-active != 1)
+(or	(wood-amount >= wall-start-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-castle)
+	(set-goal mem-stronghold-index 0)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(goal inseln no)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-active != 1)
+	(up-compare-goal mem-stronghold-castle-done >= 1)
+	(up-compare-goal mem-stronghold-castle-done g:< building-type-count castle)
+(or	(wood-amount >= wall-start-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-castle)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-castle-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== ARM: MAINTAIN (TIMER + UNDER ATTACK) ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-done >= 1)
+	(game-time >= mem-stronghold-next-maintain)
+(or	(wood-amount >= wall-segment-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(up-modify-goal mem-stronghold-next-maintain g:= game-time)
+	(up-modify-goal mem-stronghold-next-maintain c:+ stronghold-maintain-cooldown)
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-maintain)
+	(set-goal mem-stronghold-index 0)
+	(set-goal mem-stronghold-seg stronghold-seg-setup))
+
+(defrule
+	(goal inseln no)
+	(goal underattack yes)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-done >= 1)
+(or	(wood-amount >= wall-segment-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(set-goal mem-stronghold-active 1)
+	(set-goal mem-stronghold-mode stronghold-mode-maintain)
+	(set-goal mem-stronghold-index 0)
+	(set-goal mem-stronghold-seg stronghold-seg-setup))
+
+; ======================== GEOMETRY: TC AT INDEX ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-setup)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-tc)
+(and	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-index g:< building-type-count town-center)))
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 4)
+	(up-set-target-object search-local g: mem-stronghold-index)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ stronghold-tc-padding)
+	(up-modify-goal point2-y c:+ stronghold-tc-padding)
+	(up-modify-goal point3-x c:- stronghold-tc-padding)
+	(up-modify-goal point3-y c:+ stronghold-tc-padding)
+	(up-modify-goal point4-x c:- stronghold-tc-padding)
+	(up-modify-goal point4-y c:- stronghold-tc-padding)
+	(up-modify-goal point-x c:+ stronghold-tc-padding)
+	(up-modify-goal point-y c:- stronghold-tc-padding)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-south))
+
+; ======================== GEOMETRY: CASTLE AT INDEX ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-setup)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(building-type-count castle >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: castle c: 3)
+	(up-set-target-object search-local g: mem-stronghold-index)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ stronghold-castle-padding)
+	(up-modify-goal point2-y c:+ stronghold-castle-padding)
+	(up-modify-goal point3-x c:- stronghold-castle-padding)
+	(up-modify-goal point3-y c:+ stronghold-castle-padding)
+	(up-modify-goal point4-x c:- stronghold-castle-padding)
+	(up-modify-goal point4-y c:- stronghold-castle-padding)
+	(up-modify-goal point-x c:+ stronghold-castle-padding)
+	(up-modify-goal point-y c:- stronghold-castle-padding)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-south))
+
+; ======================== GEOMETRY: CASTLE MAINTAIN AT INDEX ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-setup)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(building-type-count castle >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: castle c: 3)
+	(up-set-target-object search-local g: mem-stronghold-index)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ stronghold-castle-padding)
+	(up-modify-goal point2-y c:+ stronghold-castle-padding)
+	(up-modify-goal point3-x c:- stronghold-castle-padding)
+	(up-modify-goal point3-y c:+ stronghold-castle-padding)
+	(up-modify-goal point4-x c:- stronghold-castle-padding)
+	(up-modify-goal point4-y c:- stronghold-castle-padding)
+	(up-modify-goal point-x c:+ stronghold-castle-padding)
+	(up-modify-goal point-y c:- stronghold-castle-padding)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-south))
+
+; ======================== GATE TYPE WRAP ========================
+(defrule
+	(up-compare-goal mem-stronghold-gate-type >= 4)
+=>
+	(set-goal mem-stronghold-gate-type wall-gate-type0))
+
+; ======================== GATES (4 SIDES, PALISADE TC) ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(wood-amount >= wall-segment-wood)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-south)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(wood-amount >= wall-segment-wood)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(wood-amount >= wall-segment-wood)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(wood-amount >= wall-segment-wood)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type3)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== GATES (4 SIDES, STONE CASTLE) ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type0)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-south)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type1)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type2)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-gate-type == wall-gate-type3)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== WALL SEGMENTS (PALISADE) ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point-x c: palisade-wall)
+=>
+	(up-build-line point4-x point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-east))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-east)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point-x point2-x c: palisade-wall)
+=>
+	(up-build-line point-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-north))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-north)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point3-x point2-x c: palisade-wall)
+=>
+	(up-build-line point3-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-west))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-west)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point3-x c: palisade-wall)
+=>
+	(up-build-line point4-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-done))
+
+; Castle stone walls (build + maintain-castle)
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(current-age >= castle-age)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
+	(up-can-build-line point4-x point-x c: stone-wall)
+=>
+	(up-build-line point4-x point-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-east))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(current-age >= castle-age)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-east)
+	(up-can-build-line point-x point2-x c: stone-wall)
+=>
+	(up-build-line point-x point2-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-north))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(current-age >= castle-age)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-north)
+	(up-can-build-line point3-x point2-x c: stone-wall)
+=>
+	(up-build-line point3-x point2-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-west))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(current-age >= castle-age)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-west)
+	(up-can-build-line point4-x point3-x c: stone-wall)
+=>
+	(up-build-line point4-x point3-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-done))
+
+; Skip stuck gate segments
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
+	(up-compare-goal mem-wall-stuck >= wall-gate-retry-max)
+=>
+	(up-modify-goal mem-stronghold-seg c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
+	(up-point-contains saved-point-x c: tree-class)
+	(up-compare-goal mem-wall-stuck < wall-gate-retry-max)
+=>
+	(up-modify-goal mem-wall-stuck c:+ 1)
+	(up-lerp-tiles saved-point-x position-self-x c: 1))
+
+; ======================== ADVANCE TC / CASTLE INDEX ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-tc)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+=>
+	(up-modify-goal mem-stronghold-tc-done c:+ 1)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-tc-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-tc)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-compare-goal mem-stronghold-tc-done g:>= building-type-count town-center)
+=>
+	(set-goal mem-stronghold-active 0)
+	(set-goal mem-stronghold-mode 0)
+	(set-goal mem-stronghold-seg 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+=>
+	(up-modify-goal mem-stronghold-castle-done c:+ 1)
+	(up-modify-goal mem-stronghold-index g:= mem-stronghold-castle-done)
+	(set-goal mem-stronghold-seg stronghold-seg-setup)
+	(set-goal mem-stronghold-gate-type wall-gate-type0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-compare-goal mem-stronghold-castle-done g:>= building-type-count castle)
+=>
+	(set-goal mem-stronghold-active 0)
+	(set-goal mem-stronghold-mode 0)
+	(set-goal mem-stronghold-seg 0))
+
+; ======================== MAINTAIN: REPAIR DAMAGED WALLS/GATES ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: wall-class c: 24)
+	(up-find-local c: gate-class c: 12)
+	(up-filter-distance c: -1 c: stronghold-repair-radius)
+	(up-remove-objects search-local object-data-hitpoints g:>= stronghold-wall-hp-full)
+	(up-get-search-state local-total))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: wall-class c: 24)
+	(up-find-local c: gate-class c: 12)
+	(up-filter-distance c: -1 c: stronghold-repair-radius)
+	(up-remove-objects search-local object-data-hitpoints g:>= stronghold-stone-hp-full)
+	(up-get-search-state local-total))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(up-compare-goal local-total > 0)
+	(up-set-target-object search-local c: 0)
+=>
+	(up-get-object-data object-data-id temporary-goal)
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-filter-distance c: -1 c: stronghold-repair-radius)
+	(up-find-local c: villager c: stronghold-repair-vills)
+	(up-remove-objects search-local object-data-order == orderid-repair)
+	(up-add-object-by-id search-remote g: temporary-goal)
+	(up-target-objects 0 action-default -1 -1)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
+
+; ======================== MAINTAIN: REBUILD MISSING WALLS ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line point4-x point-x c: palisade-wall)
+=>
+	(up-build-line point4-x point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-east))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
+=>
+	(set-goal mem-stronghold-seg stronghold-seg-gate-east))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-east)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line point-x point2-x c: palisade-wall)
+=>
+	(up-build-line point-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-north))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-east)
+=>
+	(set-goal mem-stronghold-seg stronghold-seg-gate-north))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-north)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line point3-x point2-x c: palisade-wall)
+=>
+	(up-build-line point3-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-west))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-north)
+=>
+	(set-goal mem-stronghold-seg stronghold-seg-gate-west))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-west)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line point4-x point3-x c: palisade-wall)
+=>
+	(up-build-line point4-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-done))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-west)
+=>
+	(set-goal mem-stronghold-seg stronghold-seg-done))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-east))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-east)
+=>
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-north))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-north)
+=>
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-gate-west))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-west)
+=>
+	(set-goal mem-stronghold-seg stronghold-seg-done))
+
+; ======================== MAINTAIN: REBUILD GATES + CYCLE STRUCTURES ========================
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+(or	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle))
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
+=>
+	(up-modify-goal mem-stronghold-seg c:+ 1))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-modify-goal mem-stronghold-index c:+ 1)
+	(set-goal mem-stronghold-seg stronghold-seg-setup))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-modify-goal mem-stronghold-index c:+ 1)
+	(set-goal mem-stronghold-seg stronghold-seg-setup))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-compare-goal mem-stronghold-index g:>= building-type-count town-center)
+	(current-age >= castle-age)
+	(building-type-count castle >= 1)
+=>
+	(set-goal mem-stronghold-mode stronghold-mode-maintain-castle)
+	(set-goal mem-stronghold-index 0)
+	(set-goal mem-stronghold-seg stronghold-seg-setup))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-compare-goal mem-stronghold-index g:>= building-type-count town-center)
+=>
+	(set-goal mem-stronghold-active 0)
+	(set-goal mem-stronghold-mode 0)
+	(set-goal mem-stronghold-seg 0)
+	(set-goal mem-stronghold-index 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+	(up-compare-goal mem-stronghold-index g:>= building-type-count castle)
+=>
+	(set-goal mem-stronghold-active 0)
+	(set-goal mem-stronghold-mode 0)
+	(set-goal mem-stronghold-seg 0)
+	(set-goal mem-stronghold-index 0))
+
+; ======================== ABORT ON ISLAND ========================
+(defrule
+	(goal inseln yes)
+	(up-compare-goal mem-stronghold-active == 1)
+=>
+	(set-goal mem-stronghold-active 0)
+	(set-goal mem-stronghold-mode 0)
+	(set-goal mem-stronghold-seg 0))

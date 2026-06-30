@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v2.1)
+## AdaptiveAI (v2.2)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -20,6 +20,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Isolate** | Walls and gates around lumber camp, mill, and mining camp (skips missing dropsites). |
 | **Towers** | Defensive towers on TC flanks + resource sites; forward waves at slots 6–8 after isolation. |
 | **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. **Surplus wood** → more palisade walls/gates; **surplus stone** → more stone walls/gates (up to caps). |
+| **Stronghold** | **Every TC and castle** gets a walled compound with **4 gates** (one per side). **Repairs** damaged walls/gates; **rebuilds** missing segments on a timer and when under attack. |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → prep/stage → **max-pop commit** → **sustain push** until half losses → **90s recover** → repeat. |
 | **Coordination** | Loads last: pauses raids during main push, re-fortifies when raided, preserves counter modes, unblocks surplus building. |
@@ -101,13 +102,14 @@ AdaptiveAI/
 
 ```
 constants → memory → intel → detection → superiority → counters → response
-→ economy → defense → isolate → towers → fortify → military → preattack → raid → coordination
+→ economy → defense → isolate → towers → fortify → stronghold → military → preattack → raid → coordination
 ```
 
 Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal goals.
 
 ### Version history (high level)
 
+- **v2.2** — Stronghold compounds: wall every TC/castle with 4 gates; repair damaged walls/gates; rebuild missing segments (timer + under attack).
 - **v2.1** — Tactical coordination: attack recover phase, raids only in prep, response won't block surplus fortify, tower/wall completion fixes.
 - **v2.0** — Surplus wood/stone triggers extra palisade or stone wall + gate waves until fort caps.
 - **v1.9** — Raiders flank indirect routes and dodge bigger enemy groups on the path; retreat/retarget if ambushed.
