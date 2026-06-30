@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v1.8 - Food raids + forward towers/castles near food targets
-; Main raiders hit mills/farms/vills; builders + escort claim map control
+; AdaptiveAI v1.9 - Food raids + forward towers; flank routes avoid direct paths
+; Main raiders detour around bigger enemy groups; builders + escort claim map control
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -29,6 +29,9 @@
 	(set-goal mem-raid-build 0)
 	(set-goal mem-raid-has-site 0)
 	(set-goal mem-raid-stuck 0)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-path-enemy 0)
+	(set-goal mem-raid-has-target 0)
 	(up-reset-group c: raid-food-group)
 	(up-reset-group c: raid-escort-group)
 	(up-reset-group c: raid-builder-group))
@@ -43,6 +46,9 @@
 	(set-goal mem-raid-build 0)
 	(set-goal mem-raid-has-site 0)
 	(set-goal mem-raid-stuck 0)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-path-enemy 0)
+	(set-goal mem-raid-has-target 0)
 	(up-reset-group c: raid-food-group)
 	(up-reset-group c: raid-escort-group)
 	(up-reset-group c: raid-builder-group))
@@ -165,21 +171,84 @@
 	(up-set-target-point point-x)
 	(up-filter-distance c: raid-tower-safe-dist c: -1))
 
-; ======================== ATTACK FOOD + SAVE FORWARD BUILD SITE ========================
+; ======================== CACHE FOOD TARGET FOR ROUTING ========================
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total > 0)
-	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal mem-raid-route == 0)
+	(up-compare-goal mem-raid-has-target != 1)
 	(up-set-target-object search-remote c: 0)
 =>
-	(up-get-point position-object point-x)
-	(up-copy-point saved-point-x point-x)
+	(up-get-point position-object point4-x)
+	(set-goal mem-raid-has-target 1))
+
+; ======================== SCAN DIRECT PATH FOR ENEMY CLUSTERS ========================
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-raid-has-target == 1)
+	(up-compare-goal mem-raid-route == 0)
+=>
+	(up-copy-point point2-x position-self-x)
+	(up-lerp-percent point2-x point4-x c: 50)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point2-x)
+	(up-find-remote c: militiaman-line c: 20)
+	(up-find-remote c: archer-line c: 20)
+	(up-find-remote c: skirmisher-line c: 20)
+	(up-find-remote c: scout-cavalry-line c: 20)
+	(up-find-remote c: knight-line c: 20)
+	(up-find-remote c: cavalry-archer-line c: 20)
+	(up-filter-distance c: -1 c: raid-path-scan-dist)
+	(up-modify-goal mem-raid-path-enemy g:= remote-total))
+
+; Bigger enemy group on direct path: skip this target and repick
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-raid-has-target == 1)
+	(up-compare-goal mem-raid-path-enemy g:> raid-max-units)
+=>
+	(set-goal mem-raid-has-target 0)
+	(set-goal mem-raid-path-enemy 0)
+	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
+
+; ======================== PLAN FLANK WAYPOINT (NEVER DIRECT PATH) ========================
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-raid-has-target == 1)
+	(up-compare-goal mem-raid-route == 0)
+	(up-group-size c: raid-food-group > 0)
+=>
+	(up-copy-point saved-point-x point4-x)
 	(up-lerp-tiles saved-point-x position-self-x c: raid-site-offset)
 	(set-goal mem-raid-build 1)
 	(set-goal mem-raid-has-site 1)
 	(set-goal mem-raid-stuck 0)
-	(up-set-group search-local c: raid-food-group)
-	(up-target-objects 0 action-default -1 stance-aggressive)
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x point4-x c: raid-route-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: raid-flank-cross))
+
+; Widen flank when direct path has a meaningful enemy cluster
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-raid-has-target == 1)
+	(up-compare-goal mem-raid-route == 0)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:>= raid-enemy-block-min)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x point4-x c: raid-route-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: raid-flank-cross-wide))
+
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-raid-has-target == 1)
+	(up-compare-goal mem-raid-route == 0)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:<= raid-max-units)
+=>
+	(set-goal mem-raid-route 1)
+	(set-goal mem-raid-has-target 0)
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
 	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
@@ -188,6 +257,7 @@
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total <= 0)
+	(up-compare-goal mem-raid-has-target != 1)
 	(up-group-size c: raid-food-group > 0)
 =>
 	(up-set-group search-local c: raid-food-group)
@@ -196,16 +266,119 @@
 	(set-goal mem-raid-retarget 0)
 	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
 
-; ======================== ESCORT GUARDS BUILD SITE ========================
+; ======================== DETOUR TO FLANK WAYPOINT ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-route == 1)
+	(up-group-size c: raid-food-group > 0)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-get-point-distance point2-x temporary-point-x point-distance))
+
+(defrule
+	(up-compare-goal mem-raid-route == 1)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:> raid-waypoint-arrive)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-point temporary-point-x action-move -1 stance-no-attack))
+
+(defrule
+	(up-compare-goal mem-raid-route == 1)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:<= raid-waypoint-arrive)
+=>
+	(set-goal mem-raid-route 2))
+
+; ======================== APPROACH TARGET THEN ENGAGE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-route == 2)
+	(up-group-size c: raid-food-group > 0)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-get-point-distance point2-x point4-x point-distance))
+
+(defrule
+	(up-compare-goal mem-raid-route == 2)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:> raid-waypoint-arrive)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-point point4-x action-move -1 stance-no-attack))
+
+(defrule
+	(up-compare-goal mem-raid-route == 2)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:<= raid-waypoint-arrive)
+=>
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point4-x)
+	(up-find-remote c: villager-class c: 5)
+	(up-find-remote c: farm-class c: 5)
+	(up-find-remote c: mill c: 3)
+	(up-find-remote c: livestock-class c: 3)
+	(up-filter-distance c: -1 c: 6)
+	(up-set-group search-local c: raid-food-group)
+	(up-target-objects 0 action-default -1 stance-aggressive)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-path-enemy 0))
+
+; ======================== RETREAT / RETARGET IF AMBUSHED ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-route >= 1)
+	(up-group-size c: raid-food-group > 0)
+=>
+	(up-full-reset-search)
+	(up-set-group search-local c: raid-food-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-set-target-point point2-x)
+	(up-find-remote c: militiaman-line c: 15)
+	(up-find-remote c: archer-line c: 15)
+	(up-find-remote c: scout-cavalry-line c: 15)
+	(up-find-remote c: knight-line c: 15)
+	(up-filter-distance c: -1 c: 10)
+	(up-modify-goal mem-raid-path-enemy g:= remote-total))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-route >= 1)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:> raid-max-units)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-point position-self-x action-move -1 stance-no-attack)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-pick 1)
+	(set-goal mem-raid-retarget 1)
+	(set-goal mem-raid-path-enemy 0))
+
+; ======================== ESCORT GUARDS BUILD SITE (INDIRECT PATH) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-has-site == 1)
 	(up-group-size c: raid-escort-group > 0)
 =>
+	(up-copy-point point3-x position-self-x)
+	(up-lerp-percent point3-x saved-point-x c: 55)
+	(up-cross-tiles point3-x position-self-x c: raid-flank-cross)
 	(up-set-group search-local c: raid-escort-group)
-	(up-target-point saved-point-x action-move -1 stance-defensive))
+	(up-target-point point3-x action-move -1 stance-defensive))
 
-; ======================== SEND BUILDERS TO SITE ========================
+; ======================== SEND BUILDERS TO SITE (INDIRECT PATH) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -213,8 +386,11 @@
 	(up-pending-objects c: watch-tower < 1)
 	(up-pending-objects c: castle < 1)
 =>
+	(up-copy-point point3-x position-self-x)
+	(up-lerp-percent point3-x saved-point-x c: 55)
+	(up-cross-tiles point3-x position-self-x c: raid-flank-cross)
 	(up-set-group search-local c: raid-builder-group)
-	(up-target-point saved-point-x action-move -1 stance-no-attack))
+	(up-target-point point3-x action-move -1 stance-no-attack))
 
 ; ======================== BUILD FORWARD CASTLE (CASTLE AGE) ========================
 (defrule
