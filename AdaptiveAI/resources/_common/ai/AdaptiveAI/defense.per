@@ -247,7 +247,9 @@
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(building-type-count-total gate < 1)
 	(building-type-count palisade-gate4 < 1)
+	(up-compare-goal mem-wall-segments >= 4)
 	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
@@ -274,7 +276,7 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(building-type-count-total gate >= 2)
 =>
-	(set-goal mem-wall-segments wall-choke-seg-left))
+	(set-goal mem-wall-segments wall-choke-seg-done))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -282,19 +284,20 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(building-type-count-total gate >= wall-gate-target)
 =>
-	(set-goal mem-wall-segments wall-choke-seg-left))
+	(set-goal mem-wall-segments wall-choke-seg-done))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
 	(up-assign-builders c: palisade-gate-foundation4 c: 2)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-done)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -303,7 +306,7 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-stuck >= wall-gate-retry-max)
 =>
-	(set-goal mem-wall-segments wall-choke-seg-left))
+	(set-goal mem-wall-segments wall-choke-seg-done))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -332,7 +335,7 @@
 	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
 =>
 	(set-goal mem-wall-site wall-site-choke-flank)
-	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -459,7 +462,7 @@
 =>
 	(up-build-line saved-point-x point2-x c: palisade-wall)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-done))
+	(set-goal mem-wall-segments wall-choke-seg-gate))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)

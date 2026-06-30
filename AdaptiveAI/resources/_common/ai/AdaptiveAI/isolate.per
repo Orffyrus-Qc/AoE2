@@ -28,7 +28,7 @@
 	(building-type-count mining-camp < 1)
 =>
 	(set-goal mem-wall-site wall-site-choke-main)
-	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 ; ======================== GEOMETRY: LUMBER CAMP BOX ========================
@@ -106,12 +106,14 @@
 	(up-copy-point saved-point-x point-x)
 	(up-lerp-percent saved-point-x point2-x c: 50))
 
-; ======================== RESOURCE GATES (TOWARD TC) ========================
+; ======================== RESOURCE GATES (TOWARD TC) — over existing wall ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
@@ -122,8 +124,10 @@
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
@@ -134,8 +138,10 @@
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
@@ -266,5 +272,5 @@
 	(up-compare-goal mem-wall-segments >= 4)
 =>
 	(set-goal mem-wall-site wall-site-choke-main)
-	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))

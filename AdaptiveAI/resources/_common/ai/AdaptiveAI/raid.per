@@ -520,9 +520,22 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-tower)
 =>
-	(set-goal mem-raid-build-step raid-build-step-gate))
+	(set-goal mem-raid-build-step raid-build-step-wall))
 
-; ======================== STONE GATE ========================
+; ======================== STONE GATE (over existing wall) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(not (up-point-contains saved-point-x c: wall-class))
+	(up-can-build-line 0 saved-point-x c: stone-wall)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
+
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -530,6 +543,7 @@
 	(current-age >= castle-age)
 	(stone-amount >= raid-stone-segment-min)
 	(up-pending-objects c: stone-gate1 < 1)
+	(up-point-contains saved-point-x c: wall-class)
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
@@ -540,7 +554,7 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
 =>
-	(set-goal mem-raid-build-step raid-build-step-wall))
+	(set-goal mem-raid-build-step raid-build-step-done))
 
 ; ======================== STONE WALL SEGMENT ========================
 (defrule
@@ -568,7 +582,7 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
 =>
-	(set-goal mem-raid-build-step raid-build-step-done))
+	(set-goal mem-raid-build-step raid-build-step-gate))
 
 ; ======================== FORWARD BUILD DONE / RETRY ========================
 (defrule
