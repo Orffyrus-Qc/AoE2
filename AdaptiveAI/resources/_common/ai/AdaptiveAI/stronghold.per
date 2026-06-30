@@ -776,6 +776,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+=>
 	(up-modify-goal mem-stronghold-index c:+ 1)
 	(set-goal mem-stronghold-seg stronghold-seg-setup))
 
@@ -783,6 +784,7 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg >= stronghold-seg-done)
+=>
 	(up-modify-goal mem-stronghold-index c:+ 1)
 	(set-goal mem-stronghold-seg stronghold-seg-setup))
 
