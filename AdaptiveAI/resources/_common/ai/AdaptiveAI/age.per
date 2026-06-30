@@ -12,14 +12,14 @@
 ; ======================== FEUDAL AGE (ASAP) ========================
 (defrule
 	(current-age == dark-age)
-	(can-research-with-escrow ri-feudal-age)
+	(can-research-with-escrow feudal-age)
 =>
-	(research ri-feudal-age))
+	(research feudal-age))
 
 (defrule
 	(current-age == dark-age)
-	(research-available ri-feudal-age)
-	(not(research-completed ri-feudal-age))
+	(up-research-status c: feudal-age >= research-available)
+	(up-research-status c: feudal-age < research-complete)
 =>
 	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
 	(set-strategic-number sn-wood-gatherer-percentage eco-age-wood-priority)
@@ -28,8 +28,8 @@
 
 (defrule
 	(current-age == dark-age)
-	(research-available ri-feudal-age)
-	(not(research-completed ri-feudal-age))
+	(up-research-status c: feudal-age >= research-available)
+	(up-research-status c: feudal-age < research-complete)
 	(goal trainvillager no)
 	(can-train villager)
 	(civilian-population < eco-age-vills-dark)
@@ -39,14 +39,14 @@
 ; ======================== CASTLE AGE (ASAP) ========================
 (defrule
 	(current-age == feudal-age)
-	(can-research-with-escrow ri-castle-age)
+	(can-research-with-escrow castle-age)
 =>
-	(research ri-castle-age))
+	(research castle-age))
 
 (defrule
 	(current-age == feudal-age)
-	(research-available ri-castle-age)
-	(not(research-completed ri-castle-age))
+	(up-research-status c: castle-age >= research-available)
+	(up-research-status c: castle-age < research-complete)
 =>
 	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
 	(set-strategic-number sn-wood-gatherer-percentage eco-age-wood-priority)
@@ -55,8 +55,8 @@
 
 (defrule
 	(current-age == feudal-age)
-	(research-available ri-castle-age)
-	(not(research-completed ri-castle-age))
+	(up-research-status c: castle-age >= research-available)
+	(up-research-status c: castle-age < research-complete)
 	(building-type-count town-center < 2)
 	(can-build-with-escrow town-center)
 	(wood-amount >= 275)
@@ -67,14 +67,14 @@
 ; ======================== IMPERIAL AGE (ASAP) ========================
 (defrule
 	(current-age == castle-age)
-	(can-research-with-escrow ri-imperial-age)
+	(can-research-with-escrow imperial-age)
 =>
-	(research ri-imperial-age))
+	(research imperial-age))
 
 (defrule
 	(current-age == castle-age)
-	(research-available ri-imperial-age)
-	(not(research-completed ri-imperial-age))
+	(up-research-status c: imperial-age >= research-available)
+	(up-research-status c: imperial-age < research-complete)
 =>
 	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
 	(set-strategic-number sn-wood-gatherer-percentage 22)
@@ -83,8 +83,8 @@
 
 (defrule
 	(current-age == castle-age)
-	(research-available ri-imperial-age)
-	(not(research-completed ri-imperial-age))
+	(up-research-status c: imperial-age >= research-available)
+	(up-research-status c: imperial-age < research-complete)
 	(building-type-count town-center < 3)
 	(can-build-with-escrow town-center)
 	(wood-amount >= 275)
