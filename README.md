@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v1.7)
+## AdaptiveAI (v1.8)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -22,7 +22,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → defend until **max military pop** → **sustain push** until army is **halved**, then rebuild. |
-| **Raid** | Side raids on **mills, farms, livestock, villagers**; stays **16+ tiles** from enemy TC/castle and **11+** from towers. Retargets other food when pressured. |
+| **Raid** | Side raids on **mills, farms, livestock, villagers**; stays **16+ tiles** from enemy TC/castle and **11+** from towers. **Builders** drop **watch towers** (feudal) or **castles** (castle age) near food targets; a **small escort** guards the site while main raiders keep hitting food. Retargets when pressured. |
 
 Adaptation is **silent** — no in-game chat spam from the adaptive layer.
 
@@ -76,6 +76,7 @@ Try different openings and watch for:
 - Army staging behind walls (no early trickle attacks)
 - One large mixed push at military cap; fight continues until ~half the army is gone
 - Fast units raiding farms/mills/vills away from enemy TC, castle, and towers
+- Villagers building forward watch towers or castles near raided food, defended by a smaller escort
 - Raiders retarget to other food when you counter-attack (instead of diving your base)
 
 Scout the enemy so the AI can see your units and buildings — detection depends on visibility.
@@ -106,6 +107,7 @@ Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal
 
 ### Version history (high level)
 
+- **v1.8** — Forward watch towers/castles near food raid targets; builder villagers + escort guard; main raiders keep hitting food.
 - **v1.7** — Food raids on mills/farms/vills; avoid TC/castle/tower range; retarget when pressured.
 - **v1.6** — Pre-attack governor: fortify-first, max-pop commit, sustain until half losses. User-tested working.
 - **v1.5** — Unified melee+ranged attack blobs; safe-area army staging at TC.

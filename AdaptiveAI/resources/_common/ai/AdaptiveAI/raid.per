@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v1.7 - Food raids: mills/farms/vills, avoid TC/castle/tower range
-; When pressured, retarget other food workers/buildings instead of fighting base
+; AdaptiveAI v1.8 - Food raids + forward towers/castles near food targets
+; Main raiders hit mills/farms/vills; builders + escort claim map control
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -9,7 +9,8 @@
 	(current-age >= feudal-age)
 	(goal inseln no)
 	(players-building-count target-player >= 1)
-	(up-compare-goal my-mpop g:>= raid-min-force)
+	(up-compare-goal my-mpop g:>= raid-min-total)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
 (or	(up-compare-goal mem-attack-lock == 1)
 	(up-compare-goal mem-attack-sustain == 1))
 =>
@@ -25,22 +26,66 @@
 	(set-goal mem-raid-active 0)
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
-	(up-reset-group c: raid-food-group))
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-has-site 0)
+	(set-goal mem-raid-stuck 0)
+	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-escort-group)
+	(up-reset-group c: raid-builder-group))
 
 (defrule
 	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal my-mpop g:< raid-min-force)
+	(up-compare-goal my-mpop g:< raid-min-total)
 =>
 	(set-goal mem-raid-active 0)
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
-	(up-reset-group c: raid-food-group))
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-has-site 0)
+	(set-goal mem-raid-stuck 0)
+	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-escort-group)
+	(up-reset-group c: raid-builder-group))
 
-; ======================== BUILD RAID GROUP (FAST UNITS) ========================
+; ======================== BUILD ESCORT GROUP (SMALL GUARD) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-escort-group < raid-escort-min)
+	(up-compare-goal my-mpop g:>= raid-min-total)
+=>
+	(up-modify-group-flag 0 c: raid-escort-group)
+	(up-reset-group c: raid-escort-group)
+	(up-full-reset-search)
+	(up-filter-exclude -1 actionid-explore orderid-explore -1)
+	(up-find-local c: scout-cavalry-line c: raid-escort-max)
+	(up-find-local c: archer-line c: raid-escort-max)
+	(up-find-local c: skirmisher-line c: raid-escort-max)
+	(up-find-local c: knight-line c: raid-escort-max)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-create-group 0 0 c: raid-escort-group)
+	(up-modify-group-flag 1 c: raid-escort-group))
+
+; ======================== BUILD BUILDER VILLAGERS ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-builder-group < raid-builder-vills)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+=>
+	(up-modify-group-flag 0 c: raid-builder-group)
+	(up-reset-group c: raid-builder-group)
+	(up-full-reset-search)
+	(up-find-local c: villager c: raid-builder-vills)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-create-group 0 0 c: raid-builder-group)
+	(up-modify-group-flag 1 c: raid-builder-group))
+
+; ======================== BUILD MAIN FOOD RAID GROUP ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-group-size c: raid-food-group < raid-min-force)
-	(up-compare-goal my-mpop g:>= raid-min-force)
+	(up-compare-goal my-mpop g:>= raid-min-total)
 =>
 	(up-modify-group-flag 0 c: raid-food-group)
 	(up-reset-group c: raid-food-group)
@@ -51,7 +96,8 @@
 	(up-find-local c: skirmisher-line c: raid-max-units)
 	(up-find-local c: cavalry-archer-line c: raid-max-units)
 	(up-find-local c: knight-line c: raid-max-units)
-	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
 	(up-create-group 0 0 c: raid-food-group)
 	(up-modify-group-flag 1 c: raid-food-group))
 
@@ -119,13 +165,19 @@
 	(up-set-target-point point-x)
 	(up-filter-distance c: raid-tower-safe-dist c: -1))
 
-; ======================== ATTACK FOOD TARGET ========================
+; ======================== ATTACK FOOD + SAVE FORWARD BUILD SITE ========================
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total > 0)
 	(up-group-size c: raid-food-group > 0)
 	(up-set-target-object search-remote c: 0)
 =>
+	(up-get-point position-object point-x)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-tiles saved-point-x position-self-x c: raid-site-offset)
+	(set-goal mem-raid-build 1)
+	(set-goal mem-raid-has-site 1)
+	(set-goal mem-raid-stuck 0)
 	(up-set-group search-local c: raid-food-group)
 	(up-target-objects 0 action-default -1 stance-aggressive)
 	(set-goal mem-raid-pick 0)
@@ -143,3 +195,78 @@
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
 	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
+
+; ======================== ESCORT GUARDS BUILD SITE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-group-size c: raid-escort-group > 0)
+=>
+	(up-set-group search-local c: raid-escort-group)
+	(up-target-point saved-point-x action-move -1 stance-defensive))
+
+; ======================== SEND BUILDERS TO SITE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-group-size c: raid-builder-group > 0)
+	(up-pending-objects c: watch-tower < 1)
+	(up-pending-objects c: castle < 1)
+=>
+	(up-set-group search-local c: raid-builder-group)
+	(up-target-point saved-point-x action-move -1 stance-no-attack))
+
+; ======================== BUILD FORWARD CASTLE (CASTLE AGE) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(current-age >= castle-age)
+	(stone-amount >= raid-castle-stone-min)
+	(can-build castle)
+	(up-pending-objects c: castle < 1)
+	(up-can-build-line 0 saved-point-x c: castle)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: castle)
+	(up-assign-builders c: castle c: raid-builder-vills)
+	(set-goal mem-raid-stuck 0))
+
+; ======================== BUILD FORWARD WATCH TOWER (FEUDAL / LOW STONE) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(current-age >= feudal-age)
+	(wood-amount >= tower-wood-min)
+	(up-pending-objects c: watch-tower < 1)
+(or	(current-age <= feudal-age)
+	(stone-amount < raid-castle-stone-min))
+	(up-can-build-line 0 saved-point-x c: watch-tower-building)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: watch-tower-building)
+	(up-assign-builders c: watch-tower c: raid-builder-vills)
+	(set-goal mem-raid-stuck 0))
+
+; ======================== FORWARD BUILD DONE / RETRY ========================
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+(or	(up-pending-objects c: watch-tower >= 1)
+	(up-pending-objects c: castle >= 1))
+=>
+	(set-goal mem-raid-build 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-stuck >= raid-build-stuck-max)
+=>
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-stuck < raid-build-stuck-max)
+(or	(up-point-contains saved-point-x c: tree-class)
+	(up-point-contains saved-point-x c: building-class))
+=>
+	(up-modify-goal mem-raid-stuck c:+ 1)
+	(up-lerp-tiles saved-point-x position-self-x c: 1))
