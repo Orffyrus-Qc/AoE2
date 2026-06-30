@@ -81,6 +81,18 @@
 (defconst mem-explore-next-send 1962)
 (defconst mem-explore-next-scan 1963)
 (defconst mem-raid-build-step 1964)
+(defconst mem-build-pool-size 1965)
+(defconst mem-build-wall-vills 1966)
+(defconst mem-build-gate-vills 1967)
+(defconst mem-build-tower-vills 1968)
+(defconst mem-build-struct-vills 1969)
+(defconst mem-build-repair-vills 1970)
+(defconst mem-build-raid-vills 1971)
+(defconst mem-build-gate-cap 1972)
+(defconst mem-build-wall-cap 1973)
+(defconst mem-build-gate-now 1974)
+(defconst mem-build-wall-now 1975)
+(defconst mem-build-next-ramp 1976)
 
 ; --- Adaptation modes (values stored in mem-adapt-mode) ---
 (defconst adapt-balanced 0)
@@ -296,6 +308,8 @@
 (defconst fort-wave-max 6)
 (defconst fort-gate-cap 18)
 (defconst fort-wall-cap 96)
+(defconst fort-gate-cap-max 36)
+(defconst fort-wall-cap-max 180)
 (defconst fort-stone-min 120)
 (defconst fort-site-step 4)
 (defconst fort-wave-forward 3)
@@ -324,6 +338,20 @@
 (defconst stronghold-stone-hp-full 850)
 (defconst stronghold-maintain-cooldown 20)
 (defconst stronghold-repair-vills 3)
+
+; --- Dedicated build/repair corps (scales over time) ---
+(defconst build-workers-group 19)
+(defconst build-pool-feudal 6)
+(defconst build-pool-castle 10)
+(defconst build-pool-imp 16)
+(defconst build-pool-max 24)
+(defconst build-ramp-interval 360)
+(defconst build-wall-vills-max 10)
+(defconst build-gate-vills-max 8)
+(defconst build-tower-vills-max 8)
+(defconst build-struct-vills-max 8)
+(defconst build-repair-vills-max 12)
+(defconst build-raid-vills-max 8)
 
 ; --- Strategic towers (defensive TC flanks + offensive forward) ---
 (defconst tower-def-max 9)

@@ -74,22 +74,61 @@
 	(up-find-local c: knight-line c: raid-escort-max)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-escort-group)
 	(up-modify-group-flag 1 c: raid-escort-group))
 
-; ======================== BUILD BUILDER VILLAGERS ========================
+; ======================== BUILD BUILDER VILLAGERS (SCALES WITH BUILDERS.PER) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
-	(up-group-size c: raid-builder-group < raid-builder-vills)
+	(up-group-size c: raid-builder-group < 8)
+	(up-compare-goal mem-build-raid-vills >= 8)
 	(up-compare-goal villagercount >= eco-boom-vills-feudal)
 =>
 	(up-modify-group-flag 0 c: raid-builder-group)
 	(up-reset-group c: raid-builder-group)
 	(up-full-reset-search)
-	(up-find-local c: villager c: raid-builder-vills)
+	(up-find-local c: villager g: mem-build-raid-vills)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-create-group 0 0 c: raid-builder-group)
+	(up-modify-group-flag 1 c: raid-builder-group))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-builder-group < 6)
+	(up-compare-goal mem-build-raid-vills >= 6)
+	(up-compare-goal mem-build-raid-vills < 8)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+=>
+	(up-modify-group-flag 0 c: raid-builder-group)
+	(up-reset-group c: raid-builder-group)
+	(up-full-reset-search)
+	(up-find-local c: villager g: mem-build-raid-vills)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-create-group 0 0 c: raid-builder-group)
+	(up-modify-group-flag 1 c: raid-builder-group))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-builder-group < raid-builder-vills)
+	(up-compare-goal mem-build-raid-vills < 6)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+=>
+	(up-modify-group-flag 0 c: raid-builder-group)
+	(up-reset-group c: raid-builder-group)
+	(up-full-reset-search)
+	(up-find-local c: villager g: mem-build-raid-vills)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-builder-group)
 	(up-modify-group-flag 1 c: raid-builder-group))
 
@@ -110,6 +149,7 @@
 	(up-find-local c: knight-line c: raid-max-units)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-food-group)
 	(up-modify-group-flag 1 c: raid-food-group))
@@ -430,7 +470,7 @@
 =>
 	(set-strategic-number sn-ignore-tower-elevation 1)
 	(up-build-line saved-point-x saved-point-x c: town-center)
-	(up-assign-builders c: town-center-foundation c: raid-builder-vills)
+	(up-assign-builders c: town-center-foundation g: mem-build-struct-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
@@ -452,7 +492,7 @@
 =>
 	(set-strategic-number sn-ignore-tower-elevation 1)
 	(up-build-line saved-point-x saved-point-x c: castle)
-	(up-assign-builders c: castle c: raid-builder-vills)
+	(up-assign-builders c: castle g: mem-build-struct-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
@@ -473,7 +513,7 @@
 =>
 	(set-strategic-number sn-ignore-tower-elevation 1)
 	(up-build-line saved-point-x saved-point-x c: watch-tower-building)
-	(up-assign-builders c: watch-tower c: raid-builder-vills)
+	(up-assign-builders c: watch-tower g: mem-build-tower-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
@@ -493,7 +533,7 @@
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
-	(up-assign-builders c: wall-class c: 2)
+	(up-assign-builders c: stone-gate1 g: mem-build-gate-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
@@ -521,7 +561,7 @@
 	(up-can-build-line saved-point-x point3-x c: stone-wall)
 =>
 	(up-build-line saved-point-x point3-x c: stone-wall)
-	(up-assign-builders c: wall-class c: 2)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule

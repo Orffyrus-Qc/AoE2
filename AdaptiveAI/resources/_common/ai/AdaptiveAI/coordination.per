@@ -64,8 +64,8 @@
 	(up-compare-goal mem-fortify-ready == 1)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
 	(up-compare-goal mem-wall-active != 1)
-	(building-type-count-total gate < fort-gate-cap)
-	(building-type-count-total wall-class < fort-wall-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
 (or	(wood-amount >= wall-start-wood)
 	(stone-amount >= fort-stone-min))
 =>

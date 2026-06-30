@@ -2,7 +2,7 @@
 
 Age of Empires II: Definitive Edition mods and AI projects.
 
-## AdaptiveAI (v2.4)
+## AdaptiveAI (v2.5)
 
 **AdaptiveAI** is a local mod that wraps the **Promisory Extreme** AI with an adaptive layer. The base AI still handles economy, aging, villager control, and production. The adaptive modules watch what the human opponent is doing and steer counters, military posture, and base defense on top.
 
@@ -22,6 +22,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. **Surplus wood** → more palisade walls/gates; **surplus stone** → more stone walls/gates (up to caps). |
 | **Stronghold** | **Every TC and castle** gets a walled compound with **4 gates** (one per side). **Repairs** damaged walls/gates; **rebuilds** missing segments on a timer and when under attack. |
 | **Explore** | **Army scouts** sweep the map toward enemy flanks; **monitors** enemy TC/castle and food sites. Raids wait for intel (or 8‑min fallback), then hit closest visible food. |
+| **Builders** | **Dedicated build corps** (group 19): worker counts **rise over time** with age, TCs, and castles. Extra villagers on pending **walls, gates, towers, TCs, castles**; continuous **repair/rebuild**; rising wall/gate caps. |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → prep/stage → **max-pop commit** → **sustain push** until half losses → **90s recover** → repeat. |
 | **Coordination** | Loads last: pauses raids during main push, re-fortifies when raided, preserves counter modes, unblocks surplus building. |
@@ -103,13 +104,14 @@ AdaptiveAI/
 
 ```
 constants → memory → intel → detection → superiority → counters → response
-→ economy → defense → isolate → towers → fortify → stronghold → military → preattack → explore → raid → coordination
+→ economy → builders → defense → isolate → towers → fortify → stronghold → military → preattack → explore → raid → coordination
 ```
 
 Goal slots **1900+** in `constants.per` avoid collisions with Promisory internal goals.
 
 ### Version history (high level)
 
+- **v2.5** — Scaling dedicated build/repair corps; more workers over time for walls, gates, towers, TCs, castles; rising fort caps.
 - **v2.4** — New TC compounds prioritized (incl. foundations); raid builders place forward TC/tower/castle/stone wall/gate.
 - **v2.3** — Army explore patrol + enemy position monitor; raids dispatch only after enemy/food intel (8‑min fallback).
 - **v2.2** — Stronghold compounds: wall every TC/castle with 4 gates; repair damaged walls/gates; rebuild missing segments (timer + under attack).

@@ -1,0 +1,394 @@
+;==============================================================================
+; AdaptiveAI v2.5 - Dedicated build/repair corps; worker counts rise over time
+; Exclusive villagers for walls, gates, towers, TCs, castles, maintain/rebuild.
+;==============================================================================
+
+; ======================== TRACK WALL/GATE TOTALS ========================
+(defrule
+	(true)
+=>
+	(up-full-reset-search)
+	(up-find-local c: gate-class c: 48)
+	(up-get-search-state local-total)
+	(up-modify-goal mem-build-gate-now g:= local-total))
+
+(defrule
+	(true)
+=>
+	(up-full-reset-search)
+	(up-find-local c: wall-class c: 120)
+	(up-get-search-state local-total)
+	(up-modify-goal mem-build-wall-now g:= local-total))
+
+; ======================== RAMP CAPS + POOL OVER TIME ========================
+(defrule
+	(current-age >= feudal-age)
+	(game-time >= mem-build-next-ramp)
+=>
+	(up-modify-goal mem-build-next-ramp g:= game-time)
+	(up-modify-goal mem-build-next-ramp c:+ build-ramp-interval)
+	(up-modify-goal mem-build-gate-cap c:+ 1)
+	(up-modify-goal mem-build-wall-cap c:+ 4)
+	(up-modify-goal mem-build-pool-size c:+ 1))
+
+(defrule
+	(up-compare-goal mem-build-gate-cap g:> fort-gate-cap-max)
+=>
+	(set-goal mem-build-gate-cap fort-gate-cap-max))
+
+(defrule
+	(up-compare-goal mem-build-wall-cap g:> fort-wall-cap-max)
+=>
+	(set-goal mem-build-wall-cap fort-wall-cap-max))
+
+(defrule
+	(up-compare-goal mem-build-pool-size g:> build-pool-max)
+=>
+	(set-goal mem-build-pool-size build-pool-max))
+
+; ======================== SCALE WORKER TARGETS BY AGE + STRUCTURES ========================
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-pool-size < build-pool-feudal)
+=>
+	(set-goal mem-build-pool-size build-pool-feudal))
+
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-build-pool-size < build-pool-castle)
+=>
+	(set-goal mem-build-pool-size build-pool-castle))
+
+(defrule
+	(current-age >= imperial-age)
+	(up-compare-goal mem-build-pool-size < build-pool-imp)
+=>
+	(set-goal mem-build-pool-size build-pool-imp))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-count >= 2)
+	(up-compare-goal mem-build-pool-size g:< build-pool-max)
+=>
+	(up-modify-goal mem-build-pool-size c:+ 1))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-stronghold-tc-count >= 3)
+	(up-compare-goal mem-build-pool-size g:< build-pool-max)
+=>
+	(up-modify-goal mem-build-pool-size c:+ 1))
+
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-castle-count >= 1)
+	(up-compare-goal mem-build-pool-size g:< build-pool-max)
+=>
+	(up-modify-goal mem-build-pool-size c:+ 2))
+
+; Per-role targets derived from pool
+(defrule
+	(current-age >= feudal-age)
+=>
+	(up-modify-goal mem-build-wall-vills g:= mem-build-pool-size)
+	(up-modify-goal mem-build-gate-vills g:= mem-build-pool-size)
+	(up-modify-goal mem-build-tower-vills g:= mem-build-pool-size)
+	(up-modify-goal mem-build-struct-vills g:= mem-build-pool-size)
+	(up-modify-goal mem-build-repair-vills g:= mem-build-pool-size)
+	(up-modify-goal mem-build-raid-vills g:= mem-build-pool-size))
+
+(defrule
+	(up-compare-goal mem-build-wall-vills g:> build-wall-vills-max)
+=>
+	(set-goal mem-build-wall-vills build-wall-vills-max))
+
+(defrule
+	(up-compare-goal mem-build-gate-vills g:> build-gate-vills-max)
+=>
+	(set-goal mem-build-gate-vills build-gate-vills-max))
+
+(defrule
+	(up-compare-goal mem-build-tower-vills g:> build-tower-vills-max)
+=>
+	(set-goal mem-build-tower-vills build-tower-vills-max))
+
+(defrule
+	(up-compare-goal mem-build-struct-vills g:> build-struct-vills-max)
+=>
+	(set-goal mem-build-struct-vills build-struct-vills-max))
+
+(defrule
+	(up-compare-goal mem-build-repair-vills g:> build-repair-vills-max)
+=>
+	(set-goal mem-build-repair-vills build-repair-vills-max))
+
+(defrule
+	(up-compare-goal mem-build-raid-vills g:> build-raid-vills-max)
+=>
+	(set-goal mem-build-raid-vills build-raid-vills-max))
+
+(defrule
+	(goal underattack yes)
+	(up-compare-goal mem-build-repair-vills g:< build-repair-vills-max)
+=>
+	(up-modify-goal mem-build-repair-vills c:+ 3))
+
+; Minimums so fortify/stronghold always get help
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-wall-vills < 2)
+=>
+	(set-goal mem-build-wall-vills 2))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-gate-vills < 2)
+=>
+	(set-goal mem-build-gate-vills 2))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-repair-vills < 2)
+=>
+	(set-goal mem-build-repair-vills 2))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-raid-vills < raid-builder-vills)
+=>
+	(up-modify-goal mem-build-raid-vills g:= raid-builder-vills))
+
+; ======================== DEDICATED BUILD CORPS (GROUP 19) ========================
+(defrule
+	(current-age >= feudal-age)
+	(up-group-size c: build-workers-group < mem-build-pool-size)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+=>
+	(up-modify-group-flag 0 c: build-workers-group)
+	(up-reset-group c: build-workers-group)
+	(up-full-reset-search)
+	(up-find-local c: villager g: mem-build-pool-size)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-create-group 0 0 c: build-workers-group)
+	(up-modify-group-flag 1 c: build-workers-group))
+
+; ======================== CORPS: REPAIR DAMAGED WALLS/GATES NEAR TC ========================
+(defrule
+	(current-age >= feudal-age)
+	(up-group-size c: build-workers-group > 0)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: wall-class c: 32)
+	(up-find-local c: gate-class c: 16)
+	(up-filter-distance c: -1 c: stronghold-repair-radius)
+	(up-remove-objects search-local object-data-hitpoints g:>= stronghold-wall-hp-full)
+	(up-get-search-state local-total))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-group-size c: build-workers-group > 0)
+	(up-compare-goal local-total > 0)
+	(up-set-target-object search-local c: 0)
+=>
+	(up-get-object-data object-data-id temporary-goal)
+	(up-set-group search-local c: build-workers-group)
+	(up-full-reset-search)
+	(up-add-object-by-id search-remote g: temporary-goal)
+	(up-target-objects 0 action-default -1 -1))
+
+; ======================== EXTRA BUILDERS ON PENDING WALLS ========================
+(defrule
+	(up-pending-objects c: palisade-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 8)
+=>
+	(up-assign-builders c: wall-class c: 8))
+
+(defrule
+	(up-pending-objects c: palisade-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 6)
+	(up-compare-goal mem-build-wall-vills < 8)
+=>
+	(up-assign-builders c: wall-class c: 6))
+
+(defrule
+	(up-pending-objects c: palisade-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 4)
+	(up-compare-goal mem-build-wall-vills < 6)
+=>
+	(up-assign-builders c: wall-class c: 4))
+
+(defrule
+	(up-pending-objects c: palisade-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 2)
+	(up-compare-goal mem-build-wall-vills < 4)
+=>
+	(up-assign-builders c: wall-class c: 2))
+
+(defrule
+	(up-pending-objects c: stone-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 8)
+=>
+	(up-assign-builders c: wall-class c: 8))
+
+(defrule
+	(up-pending-objects c: stone-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 6)
+	(up-compare-goal mem-build-wall-vills < 8)
+=>
+	(up-assign-builders c: wall-class c: 6))
+
+(defrule
+	(up-pending-objects c: stone-wall >= 1)
+	(up-compare-goal mem-build-wall-vills >= 4)
+	(up-compare-goal mem-build-wall-vills < 6)
+=>
+	(up-assign-builders c: wall-class c: 4))
+
+; ======================== EXTRA BUILDERS ON PENDING GATES ========================
+(defrule
+	(up-pending-objects c: palisade-gate-foundation1 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: palisade-gate-foundation1 c: 6))
+
+(defrule
+	(up-pending-objects c: palisade-gate-foundation2 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: palisade-gate-foundation2 c: 6))
+
+(defrule
+	(up-pending-objects c: palisade-gate-foundation3 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: palisade-gate-foundation3 c: 6))
+
+(defrule
+	(up-pending-objects c: palisade-gate-foundation4 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: palisade-gate-foundation4 c: 6))
+
+(defrule
+	(up-pending-objects c: stone-gate1 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: stone-gate1 c: 6))
+
+(defrule
+	(up-pending-objects c: stone-gate2 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: stone-gate2 c: 6))
+
+(defrule
+	(up-pending-objects c: stone-gate3 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: stone-gate3 c: 6))
+
+(defrule
+	(up-pending-objects c: stone-gate4 >= 1)
+	(up-compare-goal mem-build-gate-vills >= 6)
+=>
+	(up-assign-builders c: stone-gate4 c: 6))
+
+; ======================== EXTRA BUILDERS ON TOWERS / TC / CASTLE ========================
+(defrule
+	(up-pending-objects c: watch-tower >= 1)
+	(up-compare-goal mem-build-tower-vills >= 6)
+=>
+	(up-assign-builders c: watch-tower c: 6))
+
+(defrule
+	(up-pending-objects c: watch-tower >= 1)
+	(up-compare-goal mem-build-tower-vills >= 4)
+	(up-compare-goal mem-build-tower-vills < 6)
+=>
+	(up-assign-builders c: watch-tower c: 4))
+
+(defrule
+	(up-pending-objects c: bombard-tower >= 1)
+	(up-compare-goal mem-build-tower-vills >= 4)
+=>
+	(up-assign-builders c: bombard-tower c: 4))
+
+(defrule
+	(up-pending-objects c: town-center >= 1)
+	(up-compare-goal mem-build-struct-vills >= 6)
+=>
+	(up-assign-builders c: town-center-foundation c: 6))
+
+(defrule
+	(up-pending-objects c: town-center >= 1)
+	(up-compare-goal mem-build-struct-vills >= 4)
+	(up-compare-goal mem-build-struct-vills < 6)
+=>
+	(up-assign-builders c: town-center-foundation c: 4))
+
+(defrule
+	(up-pending-objects c: castle >= 1)
+	(up-compare-goal mem-build-struct-vills >= 6)
+=>
+	(up-assign-builders c: castle c: 6))
+
+(defrule
+	(up-pending-objects c: castle >= 1)
+	(up-compare-goal mem-build-struct-vills >= 4)
+	(up-compare-goal mem-build-struct-vills < 6)
+=>
+	(up-assign-builders c: castle c: 4))
+
+; ======================== KEEP FORTIFY GOING UNDER RISING CAPS ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+(or	(wood-amount >= wall-segment-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
+	(wood-amount >= wall-segment-wood)
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== MORE TOWERS WHILE POOL GROWS ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-build-pool-size >= build-pool-castle)
+	(building-type-count-total tower-class < fort-tower-cap)
+	(up-compare-goal mem-tower-def-active != 1)
+	(wood-amount >= tower-wood-min)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))

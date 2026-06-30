@@ -34,7 +34,7 @@
 	(up-compare-goal villagercount >= eco-boom-vills-feudal)
 	(food-amount >= eco-boom-food-min)
 	(wood-amount >= wall-start-wood)
-	(building-type-count-total gate < fort-gate-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
 (or	(goal underattack yes)
 (or	(up-compare-goal mem-attack-events >= 4)
@@ -93,8 +93,8 @@
 	(up-compare-goal villagercount >= eco-boom-vills-feudal)
 	(food-amount >= eco-boom-food-min)
 	(wood-amount >= fort-wood-surplus)
-	(building-type-count-total gate < fort-gate-cap)
-	(building-type-count-total wall-class < fort-wall-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
 (or	(up-compare-goal mem-wall-tier == wall-tier-palisade)
 	(stone-amount < fort-stone-surplus))
 =>
@@ -117,8 +117,8 @@
 	(food-amount >= eco-boom-food-min)
 	(stone-amount >= fort-stone-surplus)
 	(up-compare-goal mem-wall-tier >= wall-tier-stone)
-	(building-type-count-total gate < fort-gate-cap)
-	(building-type-count-total wall-class < fort-wall-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
 =>
 	(set-goal mem-wall-active 1)
 	(set-goal mem-wall-phase wall-phase-build)
@@ -293,7 +293,7 @@
 	(up-compare-goal mem-wall-site == wall-site-stone-ring)
 	(up-compare-goal mem-wall-segments >= 4)
 	(up-compare-goal mem-fort-wave < fort-wave-max)
-	(building-type-count-total gate < fort-gate-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
 =>
 	(up-modify-goal mem-fort-wave c:+ 1)
 	(set-goal mem-wall-site wall-site-outer1)
@@ -304,8 +304,8 @@
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-fort-wave >= fort-wave-max)
-	(building-type-count-total gate < fort-gate-cap)
-	(building-type-count-total wall-class < fort-wall-cap)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
 (or	(wood-amount >= fort-wood-surplus)
 	(stone-amount >= fort-stone-surplus))
 =>
@@ -316,14 +316,14 @@
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(building-type-count-total gate >= fort-gate-cap)
+	(up-compare-goal mem-build-gate-now g:>= mem-build-gate-cap)
 =>
 	(set-goal mem-wall-phase wall-phase-done)
 	(set-goal mem-wall-active 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(building-type-count-total wall-class >= fort-wall-cap)
+	(up-compare-goal mem-build-wall-now g:>= mem-build-wall-cap)
 =>
 	(set-goal mem-wall-phase wall-phase-done)
 	(set-goal mem-wall-active 0))

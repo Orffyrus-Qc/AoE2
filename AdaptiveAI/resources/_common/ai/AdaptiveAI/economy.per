@@ -57,6 +57,41 @@
 =>
 	(set-strategic-number sn-gold-gatherer-percentage 8))
 
+; Scale villager count with growing build corps
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-pool-size >= build-pool-castle)
+	(up-compare-goal villagercount < 36)
+	(goal trainvillager no)
+	(food-amount >= 200)
+=>
+	(set-goal trainvillager yes))
+
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-build-pool-size >= build-pool-imp)
+	(up-compare-goal villagercount < 42)
+	(goal trainvillager no)
+	(food-amount >= 250)
+=>
+	(set-goal trainvillager yes))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)
+	(wood-amount < 300)
+	(strategic-number sn-wood-gatherer-percentage < 40)
+=>
+	(set-strategic-number sn-wood-gatherer-percentage 40))
+
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
+	(stone-amount < fort-stone-min)
+	(strategic-number sn-stone-gatherer-percentage < eco-stone-rush-pct)
+=>
+	(set-strategic-number sn-stone-gatherer-percentage eco-stone-rush-pct))
+
 ; Stone on demand: fortify/towers need stone now
 (defrule
 	(current-age >= castle-age)

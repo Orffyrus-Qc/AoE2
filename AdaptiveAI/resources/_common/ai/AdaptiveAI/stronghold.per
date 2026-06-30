@@ -571,7 +571,7 @@
 	(up-full-reset-search)
 	(up-set-target-point saved-point-x)
 	(up-filter-distance c: -1 c: stronghold-repair-radius)
-	(up-find-local c: villager c: stronghold-repair-vills)
+	(up-find-local c: villager g: mem-build-repair-vills)
 	(up-remove-objects search-local object-data-order == orderid-repair)
 	(up-add-object-by-id search-remote g: temporary-goal)
 	(up-target-objects 0 action-default -1 -1)
