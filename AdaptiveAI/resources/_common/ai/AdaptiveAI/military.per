@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v1.0 - Full group military system + population-scaled blobs
+; AdaptiveAI v1.5 - Unified mixed blobs + safe-area army staging
 ; 1) Anti-TSA stream   2) Age-scaled waves   3) Opening/adapt profiles
 ; 4) Siege+escort     5) Defend groups      6) Pre-attack rally
 ;==============================================================================
@@ -14,7 +14,21 @@
 	(set-strategic-number sn-group-commander-selection-method 0)
 	(set-strategic-number sn-ignore-attack-group-under-attack 1)
 	(set-strategic-number sn-group-leader-defense-distance group-leader-defense)
+	(set-strategic-number sn-scale-minimum-attack-group-size 0)
+	(set-strategic-number sn-scale-maximum-attack-group-size 0)
 	(disable-self))
+
+; Keep melee + ranged in the same attack blob (disable Promisory split micro)
+(defrule
+	(military-population >= group-rally-min)
+(or	(up-compare-goal mem-rally-army == 1)
+(or	(up-compare-goal attackmethod == groups)
+	(goal attacking yes)))
+=>
+	(set-goal group-micro no)
+	(set-goal melee-micro no)
+	(set-goal spreadunits no)
+	(set-strategic-number sn-task-ungrouped-soldiers 0))
 
 ; Permanent group mode whenever we have a real army (blocks TSA trickle default)
 (defrule
@@ -43,11 +57,13 @@
 	(set-strategic-number sn-percent-attack-soldiers 100)
 	(set-strategic-number sn-number-attack-groups 1000))
 
-; Active attack: full group commitment
+; Active attack: full group commitment (mixed melee + ranged waves)
 (defrule
 	(goal attacking yes)
 =>
 	(set-goal attackmethod groups)
+	(set-goal group-micro no)
+	(set-goal melee-micro no)
 	(set-goal spreadunits no)
 	(set-strategic-number sn-percent-attack-soldiers 100)
 	(set-strategic-number sn-number-attack-groups 1000)
@@ -55,6 +71,7 @@
 	(set-strategic-number sn-number-boat-attack-groups 1000)
 	(set-strategic-number sn-task-ungrouped-soldiers 0)
 	(set-strategic-number sn-gather-defense-units 0)
+	(set-strategic-number sn-gather-idle-soldiers-at-center 0)
 	(set-strategic-number sn-group-form-distance group-form-normal)
 	(set-strategic-number sn-attack-group-gather-spacing group-spacing-normal))
 
@@ -102,9 +119,35 @@
 	(up-compare-goal mem-attack-events >= 4)))))
 =>
 	(set-goal mem-rally-army 1)
+	(set-goal attackmethod groups))
+
+; Big army with no active push: stage behind TC instead of trickling
+(defrule
+	(up-compare-goal attacking != yes)
+	(up-compare-goal mem-rally-army != 1)
+	(goal underattack no)
+(or	(and	(strategic-number sn-current-age == feudal)
+		(military-population >= group-rally-big-feudal))
+	(and	(strategic-number sn-current-age >= castlea)
+		(military-population >= group-rally-big-castle)))
+=>
+	(set-goal mem-rally-army 1)
+	(set-goal attackmethod groups))
+
+; Safe-area staging: one mixed blob at TC, hold until Promisory commits attack
+(defrule
+	(up-compare-goal mem-rally-army == 1)
+	(up-compare-goal attacking != yes)
+	(military-population >= group-rally-min)
+=>
 	(set-goal attackmethod groups)
-	(set-strategic-number sn-percent-attack-soldiers 100)
-	(set-strategic-number sn-number-attack-groups 1000)
+	(set-goal group-micro no)
+	(set-goal melee-micro no)
+	(set-goal spreadunits no)
+	(set-strategic-number sn-percent-attack-soldiers 0)
+	(set-strategic-number sn-number-attack-groups 1)
+	(set-strategic-number sn-gather-idle-soldiers-at-center 1)
+	(set-strategic-number sn-task-ungrouped-soldiers 0)
 	(set-strategic-number sn-group-form-distance group-form-loose)
 	(set-strategic-number sn-attack-group-gather-spacing group-spacing-loose))
 
@@ -114,17 +157,44 @@
 	(strategic-number sn-current-age == feudal)
 	(military-population >= group-rally-min)
 =>
-	(set-strategic-number sn-minimum-attack-group-size group-rally-min)
-	(set-strategic-number sn-maximum-attack-group-size group-rally-max))
+	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-attack-group-size c:* group-safe-blob-pct-num)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-safe-blob-pct-den)
+	(up-modify-sn sn-minimum-attack-group-size c:min group-safe-blob-min)
+	(up-modify-sn sn-minimum-attack-group-size c:max group-safe-blob-feudal-cap)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-safe-blob-feudal-cap))
 
 (defrule
 	(up-compare-goal mem-rally-army == 1)
 	(up-compare-goal attacking != yes)
-	(strategic-number sn-current-age >= castlea)
+	(strategic-number sn-current-age == castlea)
 	(military-population >= group-rally-castle-min)
 =>
-	(set-strategic-number sn-minimum-attack-group-size group-rally-castle-min)
-	(set-strategic-number sn-maximum-attack-group-size group-rally-castle-max))
+	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-attack-group-size c:* group-safe-blob-pct-num)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-safe-blob-pct-den)
+	(up-modify-sn sn-minimum-attack-group-size c:min group-rally-castle-min)
+	(up-modify-sn sn-minimum-attack-group-size c:max group-safe-blob-castle-cap)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-safe-blob-castle-cap))
+
+(defrule
+	(up-compare-goal mem-rally-army == 1)
+	(up-compare-goal attacking != yes)
+	(strategic-number sn-current-age >= imperial)
+	(military-population >= group-imp-min)
+=>
+	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-attack-group-size c:* group-safe-blob-pct-num)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-safe-blob-pct-den)
+	(up-modify-sn sn-minimum-attack-group-size c:min group-imp-min)
+	(up-modify-sn sn-minimum-attack-group-size c:max group-safe-blob-imp-cap)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-safe-blob-imp-cap))
 
 ; Defensive posture: hold larger rally blob before committing
 (defrule
@@ -229,37 +299,6 @@
 	(up-modify-sn sn-maximum-attack-group-size c:max 60))
 
 ; ======================== 7) POPULATION-SCALED GROUP SIZES ========================
-; Rally staging: bigger blob before committing to attack
-(defrule
-	(up-compare-goal mem-rally-army == 1)
-	(up-compare-goal attacking != yes)
-	(strategic-number sn-current-age == feudal)
-	(military-population >= group-scale-mpop-feudal)
-=>
-	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-feudal)
-	(up-modify-sn sn-minimum-attack-group-size c:min group-rally-min)
-	(up-modify-sn sn-minimum-attack-group-size c:max group-rally-max)
-	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-feudal)
-	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
-	(up-modify-sn sn-maximum-attack-group-size c:max group-rally-max))
-
-(defrule
-	(up-compare-goal mem-rally-army == 1)
-	(up-compare-goal attacking != yes)
-	(strategic-number sn-current-age >= castlea)
-	(military-population >= group-scale-mpop-castle)
-=>
-	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-castle)
-	(up-modify-sn sn-minimum-attack-group-size c:min group-rally-castle-min)
-	(up-modify-sn sn-minimum-attack-group-size c:max group-rally-castle-max)
-	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-castle)
-	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
-	(up-modify-sn sn-maximum-attack-group-size c:max group-rally-castle-max))
-
 ; Attack waves: scale min + max with military population
 (defrule
 	(goal attacking yes)
@@ -486,3 +525,10 @@
 	(set-strategic-number sn-minimum-defend-group-size 1)
 	(set-strategic-number sn-maximum-defend-group-size 1)
 	(set-strategic-number sn-gather-defense-units 0))
+
+(defrule
+	(up-compare-goal mem-rally-army != 1)
+	(up-compare-goal attacking != yes)
+	(strategic-number sn-gather-idle-soldiers-at-center == 1)
+=>
+	(set-strategic-number sn-gather-idle-soldiers-at-center 0))

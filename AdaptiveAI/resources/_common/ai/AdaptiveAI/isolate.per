@@ -1,0 +1,270 @@
+;==============================================================================
+; AdaptiveAI v1.4 - Isolate TC + resource drops (walls, gates, tower anchors)
+; Flow: TC box -> lumber -> mill -> mine -> forward chokes (defense.per)
+;==============================================================================
+
+; ======================== SKIP MISSING RESOURCE SITES ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(building-type-count lumber-camp < 1)
+=>
+	(set-goal mem-wall-site wall-site-res-mill)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(building-type-count mill < 1)
+=>
+	(set-goal mem-wall-site wall-site-res-mine)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(building-type-count mining-camp < 1)
+=>
+	(set-goal mem-wall-site wall-site-choke-main)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== GEOMETRY: LUMBER CAMP BOX ========================
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(building-type-count lumber-camp >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: lumber-camp c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ wall-res-padding)
+	(up-modify-goal point2-y c:+ wall-res-padding)
+	(up-modify-goal point3-x c:- wall-res-padding)
+	(up-modify-goal point3-y c:+ wall-res-padding)
+	(up-modify-goal point4-x c:- wall-res-padding)
+	(up-modify-goal point4-y c:- wall-res-padding)
+	(up-modify-goal point-x c:+ wall-res-padding)
+	(up-modify-goal point-y c:- wall-res-padding)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+; ======================== GEOMETRY: MILL BOX ========================
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(building-type-count mill >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: mill c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ wall-res-padding)
+	(up-modify-goal point2-y c:+ wall-res-padding)
+	(up-modify-goal point3-x c:- wall-res-padding)
+	(up-modify-goal point3-y c:+ wall-res-padding)
+	(up-modify-goal point4-x c:- wall-res-padding)
+	(up-modify-goal point4-y c:- wall-res-padding)
+	(up-modify-goal point-x c:+ wall-res-padding)
+	(up-modify-goal point-y c:- wall-res-padding)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+; ======================== GEOMETRY: MINING CAMP BOX ========================
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(building-type-count mining-camp >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: mining-camp c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ wall-res-padding)
+	(up-modify-goal point2-y c:+ wall-res-padding)
+	(up-modify-goal point3-x c:- wall-res-padding)
+	(up-modify-goal point3-y c:+ wall-res-padding)
+	(up-modify-goal point4-x c:- wall-res-padding)
+	(up-modify-goal point4-y c:- wall-res-padding)
+	(up-modify-goal point-x c:+ wall-res-padding)
+	(up-modify-goal point-y c:- wall-res-padding)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+; ======================== RESOURCE GATES (TOWARD TC) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(building-type-count-total gate < wall-gate-target)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(building-type-count-total gate < wall-gate-target)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(building-type-count-total gate < wall-gate-target)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== RESOURCE PERIMETER (SOUTH EDGE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-compare-goal mem-wall-dir != wall-side-south)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point-x c: palisade-wall)
+=>
+	(up-build-line point4-x point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-north))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-compare-goal mem-wall-dir == wall-side-south)
+=>
+	(set-goal mem-wall-segments wall-side-north))
+
+; ======================== RESOURCE PERIMETER (NORTH EDGE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-north)
+	(up-compare-goal mem-wall-dir != wall-side-north)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point3-x point2-x c: palisade-wall)
+=>
+	(up-build-line point3-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-west))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-north)
+	(up-compare-goal mem-wall-dir == wall-side-north)
+=>
+	(set-goal mem-wall-segments wall-side-west))
+
+; ======================== RESOURCE PERIMETER (WEST EDGE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-west)
+	(up-compare-goal mem-wall-dir != wall-side-west)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point3-x c: palisade-wall)
+=>
+	(up-build-line point4-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-east))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-west)
+	(up-compare-goal mem-wall-dir == wall-side-west)
+=>
+	(set-goal mem-wall-segments wall-side-east))
+
+; ======================== RESOURCE PERIMETER (EAST EDGE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir != wall-side-east)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point-x point2-x c: palisade-wall)
+=>
+	(up-build-line point-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments 4))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir == wall-side-east)
+=>
+	(set-goal mem-wall-segments 4))
+
+; ======================== ADVANCE RESOURCE SITES ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(up-compare-goal mem-wall-segments >= 4)
+=>
+	(set-goal mem-wall-site wall-site-res-mill)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-dir wall-side-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(up-compare-goal mem-wall-segments >= 4)
+=>
+	(set-goal mem-wall-site wall-site-res-mine)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-dir wall-side-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(up-compare-goal mem-wall-segments >= 4)
+=>
+	(set-goal mem-wall-site wall-site-choke-main)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))

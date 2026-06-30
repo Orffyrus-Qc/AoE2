@@ -19,6 +19,32 @@
 
 ; ======================== ARM DEFENSIVE ========================
 (defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-wall-active == 1)
+	(current-age >= feudal-age)
+	(wood-amount >= tower-wood-min)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active != 1)
+	(goal inseln no)
+	(game-time < tower-time-max)
+	(up-compare-goal mem-wall-active == 1)
+	(current-age >= feudal-age)
+	(wood-amount >= tower-wood-min)
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
 	(up-compare-goal mem-tower-def-active != 1)
 	(goal inseln no)
 	(game-time < tower-time-max)
@@ -207,6 +233,114 @@
 	(up-get-point position-object saved-point-x)
 	(up-lerp-tiles saved-point-x enemy-x c: tower-def-forward-side)
 	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
+
+; Slot 2: tower on TC gate / outer ring toward enemy
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-tc-slot)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-forward-side)
+	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
+
+; Slot 3: tower covering lumber camp
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-lumber-slot)
+	(building-type-count lumber-camp >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: lumber-camp c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-res))
+
+; Slot 4: tower covering mill
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-mill-slot)
+	(building-type-count mill >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: mill c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-res))
+
+; Slot 5: tower covering mining camp
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-mine-slot)
+	(building-type-count mining-camp >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: mining-camp c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-lerp-tiles saved-point-x enemy-x c: tower-def-res))
+
+; Skip resource tower slots when the dropsite is not built yet
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-lumber-slot)
+	(building-type-count lumber-camp < 1)
+=>
+	(up-modify-goal mem-tower-def-slot c:+ 1))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-mill-slot)
+	(building-type-count mill < 1)
+=>
+	(up-modify-goal mem-tower-def-slot c:+ 1))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == tower-def-mine-slot)
+	(building-type-count mining-camp < 1)
+=>
+	(up-modify-goal mem-tower-def-slot c:+ 1))
+
+; Slots 6-8: forward fortify waves (slots 2-5 reserved for TC + resource isolation)
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 6)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-tower-wave)
+	(up-modify-goal temporary-goal c:* 2)
+	(up-modify-goal temporary-goal c:+ 18)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 7)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-tower-wave)
+	(up-modify-goal temporary-goal c:* 2)
+	(up-modify-goal temporary-goal c:+ 22)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 8)
+=>
+	(up-copy-point saved-point-x position-self-x)
+	(up-lerp-percent saved-point-x enemy-x c: 55))
 
 ; ======================== OFFENSIVE PLACEMENT (FORWARD) ========================
 ; Slot 0: main forward tower on the attack vector

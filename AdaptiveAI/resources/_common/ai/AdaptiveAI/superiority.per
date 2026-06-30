@@ -52,10 +52,12 @@
 	(set-goal mem-adapt-mode adapt-pressure-castle)
 	(set-goal mem-tower-off-active 1))
 
-; Ahead with army: stop endless rally, let Promisory attack
+; Ahead with army: stop endless rally (only after pre-attack governor releases)
 (defrule
 	(up-compare-goal mem-rally-army == 1)
 	(up-compare-goal attacking != yes)
+	(up-compare-goal mem-attack-lock != 1)
+	(up-compare-goal mem-attack-sustain != 1)
 	(current-age >= castle-age)
 	(strategic-number sn-military-superiority >= superior-ahead)
 	(military-population >= group-castle-min)

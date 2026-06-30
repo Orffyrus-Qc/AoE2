@@ -488,43 +488,7 @@
 	(up-assign-builders c: wall-class c: 2)
 	(set-goal mem-wall-segments 4))
 
-; ======================== EXTRA TOWER SLOTS (2-5) ========================
-(defrule
-	(up-compare-goal mem-tower-def-active == 1)
-	(up-compare-goal mem-tower-def-slot == 2)
-	(building-type-count town-center >= 1)
-=>
-	(up-full-reset-search)
-	(up-find-local c: town-center c: 1)
-	(up-set-target-object search-local c: 0)
-	(up-get-point position-object saved-point-x)
-	(up-modify-goal temporary-goal g:= mem-tower-wave)
-	(up-modify-goal temporary-goal c:* 2)
-	(up-modify-goal temporary-goal c:+ 18)
-	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal))
-
-(defrule
-	(up-compare-goal mem-tower-def-active == 1)
-	(up-compare-goal mem-tower-def-slot == 3)
-	(building-type-count town-center >= 1)
-=>
-	(up-full-reset-search)
-	(up-find-local c: town-center c: 1)
-	(up-set-target-object search-local c: 0)
-	(up-get-point position-object saved-point-x)
-	(up-modify-goal temporary-goal g:= mem-tower-wave)
-	(up-modify-goal temporary-goal c:* 2)
-	(up-modify-goal temporary-goal c:+ 22)
-	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
-	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
-
-(defrule
-	(up-compare-goal mem-tower-def-active == 1)
-	(up-compare-goal mem-tower-def-slot == 4)
-=>
-	(up-copy-point saved-point-x position-self-x)
-	(up-lerp-percent saved-point-x enemy-x c: 55))
-
+; Forward-wave tower placement for slots 6-8 lives in towers.per (before build rules).
 (defrule
 	(up-compare-goal mem-tower-off-active == 1)
 	(up-compare-goal mem-tower-off-slot == 2)
@@ -549,7 +513,7 @@
 	(stone-amount >= tower-stone-min)
 	(building-type-count guard-tower < 4)
 	(research-completed ri-guard-tower)
-	(up-compare-goal mem-tower-def-slot < 6)
+	(up-compare-goal mem-tower-def-slot < tower-def-max)
 	(up-can-build-line 0 saved-point-x c: watch-tower-building)
 =>
 	(set-strategic-number sn-ignore-tower-elevation 1)

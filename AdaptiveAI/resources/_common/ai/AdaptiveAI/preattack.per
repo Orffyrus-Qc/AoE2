@@ -1,0 +1,83 @@
+;==============================================================================
+; AdaptiveAI v1.6 - Fortify before attack, defend until max army, sustain push
+; 1) Walls+gates+towers must finish before first offensive
+; 2) Hold attack until military-pop hits allowed cap (my-mpop >= allowed-num-military)
+; 3) Keep attacking until army drops to half of commit peak, then defend/rebuild
+;==============================================================================
+
+; ======================== FORTIFY COMPLETE FLAG ========================
+(defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(building-type-count-total gate >= wall-gate-target)
+	(building-type-count palisade-wall >= wall-complete-palisade)
+	(building-type-count-total tower-class >= preattack-towers-min)
+=>
+	(set-goal mem-fortify-ready 1))
+
+; ======================== ARM PREP LOCK (FEUDAL+) ========================
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-attack-lock != 1)
+	(up-compare-goal my-mpop g:< allowed-num-military)
+=>
+	(set-goal mem-attack-lock 1)
+	(set-goal mem-rally-army 1))
+
+; ======================== PREP PHASE: DEFEND ONLY ========================
+(defrule
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain != 1)
+=>
+	(set-goal attacking no)
+	(set-goal mem-rally-army 1)
+	(set-goal attackmethod groups)
+	(set-strategic-number sn-percent-attack-soldiers 0)
+	(set-strategic-number sn-number-attack-groups 1)
+	(set-strategic-number sn-gather-idle-soldiers-at-center 1))
+
+; ======================== COMMIT: MAX ARMY + FORTIFY DONE ========================
+(defrule
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-fortify-ready == 1)
+	(up-compare-goal my-mpop g:>= allowed-num-military)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-attack-lock 0)
+	(set-goal mem-attack-sustain 1)
+	(up-modify-goal mem-attack-peak g:= my-mpop)
+	(up-modify-goal mem-attack-floor g:= mem-attack-peak)
+	(up-modify-goal mem-attack-floor c:/ preattack-loss-half)
+	(set-goal mem-rally-army 0)
+	(set-goal attacking yes)
+	(set-strategic-number sn-percent-attack-soldiers 100)
+	(set-strategic-number sn-number-attack-groups 1000))
+
+; ======================== SUSTAIN PUSH UNTIL HALF LOSSES ========================
+(defrule
+	(up-compare-goal mem-attack-sustain == 1)
+	(up-compare-goal my-mpop g:> mem-attack-floor)
+=>
+	(set-goal attacking yes)
+	(set-goal mem-rally-army 0)
+	(set-goal attackmethod groups)
+	(set-strategic-number sn-percent-attack-soldiers 100)
+	(set-strategic-number sn-number-attack-groups 1000)
+	(set-strategic-number sn-gather-idle-soldiers-at-center 0))
+
+; ======================== RETREAT TO DEFEND / REBUILD ========================
+(defrule
+	(up-compare-goal mem-attack-sustain == 1)
+	(up-compare-goal my-mpop g:<= mem-attack-floor)
+=>
+	(set-goal mem-attack-sustain 0)
+	(set-goal mem-attack-lock 1)
+	(set-goal attacking no)
+	(set-goal mem-rally-army 1)
+	(set-strategic-number sn-percent-attack-soldiers 0)
+	(set-strategic-number sn-number-attack-groups 1)
+	(set-strategic-number sn-gather-idle-soldiers-at-center 1)
+	(set-goal mem-attack-peak 0)
+	(set-goal mem-attack-floor 0))

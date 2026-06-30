@@ -31,6 +31,22 @@
 	(set-goal mem-wall-active 0))
 
 ; ======================== ARM WALLING ========================
+; Pre-attack prep: walls before first offensive (priority over reactive triggers)
+(defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(building-type-count town-center >= 1)
+(or	(up-compare-goal villagercount >= preattack-fortify-vills)
+	(up-compare-goal mem-attack-lock == 1))
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1))
+
 (defrule
 	(up-compare-goal mem-wall-active != 1)
 	(up-compare-goal mem-wall-phase != wall-phase-done)
@@ -133,8 +149,13 @@
 	(current-age <= castle-age)
 	(game-time >= wall-proactive-time)
 	(game-time < wall-time-max)
+	(up-compare-goal villagercount >= isolate-proactive-vills)
+(or	(building-type-count lumber-camp >= 1)
+(or	(building-type-count mill >= 1)
+	(building-type-count mining-camp >= 1)))
 =>
-	(set-goal mem-wall-active 1))
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1))
 
 ; ======================== START BUILDING ========================
 (defrule
@@ -299,8 +320,9 @@
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments >= 4)
 =>
-	(set-goal mem-wall-site wall-site-choke-main)
-	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-site wall-site-res-lumber)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-dir wall-side-east)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
