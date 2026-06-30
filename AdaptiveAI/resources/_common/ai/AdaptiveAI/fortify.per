@@ -39,7 +39,7 @@
 	(set-goal mem-wall-active 1)
 	(set-goal mem-wall-phase wall-phase-build)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -96,7 +96,7 @@
 	(set-goal mem-wall-active 1)
 	(set-goal mem-wall-phase wall-phase-build)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0)
 	(set-goal mem-fort-wave 0))
 
@@ -117,7 +117,7 @@
 	(set-goal mem-wall-active 1)
 	(set-goal mem-wall-phase wall-phase-build)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0)
 	(set-goal mem-fort-wave 0))
 
@@ -236,7 +236,7 @@
 	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
 =>
 	(set-goal mem-wall-site wall-site-outer2)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -245,7 +245,7 @@
 	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
 =>
 	(set-goal mem-wall-site wall-site-forward3)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -254,7 +254,7 @@
 	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
 =>
 	(set-goal mem-wall-site wall-site-forward4)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -275,7 +275,7 @@
 =>
 	(up-modify-goal mem-fort-wave c:+ 1)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -287,7 +287,7 @@
 =>
 	(up-modify-goal mem-fort-wave c:+ 1)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 ; Surplus resources: restart forward waves instead of stopping at wave cap
@@ -301,7 +301,7 @@
 =>
 	(set-goal mem-fort-wave 0)
 	(set-goal mem-wall-site wall-site-outer1)
-	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -369,7 +369,7 @@
 	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
 	(up-assign-builders c: palisade-gate-foundation1 c: 2)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -385,7 +385,7 @@
 	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
 	(up-assign-builders c: palisade-gate-foundation2 c: 2)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -401,7 +401,7 @@
 	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
 	(up-assign-builders c: palisade-gate-foundation3 c: 2)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -417,7 +417,7 @@
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
 	(up-assign-builders c: palisade-gate-foundation4 c: 2)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 ; ======================== CHOKE GATES (STONE) — wall-aligned orientation ========================
@@ -434,7 +434,7 @@
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
 	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -450,7 +450,7 @@
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate2)
 	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -466,7 +466,7 @@
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate3)
 	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -482,7 +482,7 @@
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate4)
 	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-segments wall-choke-seg-done)
+	(set-goal mem-wall-segments wall-choke-seg-left)
 	(set-goal mem-wall-stuck 0))
 
 ; ======================== EXTENDED CHOKE WALL LINES (PALISADE) ========================
@@ -510,7 +510,7 @@
 =>
 	(up-build-line saved-point-x point2-x c: palisade-wall)
 	(up-assign-builders c: wall-class c: 1)
-	(set-goal mem-wall-segments wall-choke-seg-gate))
+	(set-goal mem-wall-segments wall-choke-seg-done))
 
 ; ======================== EXTENDED CHOKE WALL LINES (STONE) ========================
 (defrule
@@ -539,7 +539,7 @@
 =>
 	(up-build-line saved-point-x point2-x c: stone-wall)
 	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-segments wall-choke-seg-gate))
+	(set-goal mem-wall-segments wall-choke-seg-done))
 
 ; ======================== STONE RING PERIMETER (SITE 7) ========================
 (defrule
