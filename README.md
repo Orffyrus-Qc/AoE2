@@ -22,7 +22,7 @@ Age of Empires II: Definitive Edition mods and AI projects.
 | **Fortify** | Progressive stone walls, extended chokes, castle-age guard towers. **Surplus wood** → more palisade walls/gates; **surplus stone** → more stone walls/gates (up to caps). |
 | **Stronghold** | **Every TC and castle** gets a walled compound with **one controlled gate on the longest side**. **Repairs** damaged walls/gates; **rebuilds** missing segments on a timer and when under attack. |
 | **Explore** | **Army scouts** sweep the map toward enemy flanks; **monitors** enemy TC/castle and food sites. Raids wait for intel (or 8‑min fallback), then hit closest visible food. |
-| **Builders** | **Dedicated build corps** (group 19): worker counts **rise over time** with age, TCs, and castles. Extra villagers on pending **walls, gates, towers, TCs, castles**; continuous **repair/rebuild**; rising wall/gate caps. |
+| **Builders** | **Dedicated build corps** (group 19): starts earlier, ramps faster, and keeps stronger age-based worker presence on pending **walls, gates, towers, TCs, castles**; continuous **repair/rebuild**; rising wall/gate caps. |
 | **Military** | Unified **melee + ranged blobs** (anti-TSA), safe TC staging, population-scaled waves, siege escorts. |
 | **Pre-attack** | **Fortify first** → prep/stage → **max-pop commit** → **sustain push** until half losses → **90s recover** → repeat. |
 | **Coordination** | Loads last: pauses raids during main push, re-fortifies when raided, preserves counter modes, unblocks surplus building. |
