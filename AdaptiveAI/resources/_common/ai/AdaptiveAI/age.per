@@ -3,12 +3,6 @@
 ; Escrow research every tick; food focus while an age is available but pending.
 ;==============================================================================
 
-(defrule
-	(true)
-=>
-	(set-strategic-number sn-maximum-food-gather-percentage 100)
-	(disable-self))
-
 ; ======================== FEUDAL AGE (ASAP) ========================
 (defrule
 	(current-age == dark-age)
