@@ -62,6 +62,8 @@
 (defconst mem-raid-route 1943)
 (defconst mem-raid-path-enemy 1944)
 (defconst mem-raid-has-target 1945)
+(defconst mem-attack-recover 1946)
+(defconst mem-attack-recover-until 1947)
 
 ; --- Adaptation modes (values stored in mem-adapt-mode) ---
 (defconst adapt-balanced 0)
@@ -151,8 +153,13 @@
 
 ; --- Pre-attack governor (fortify first, max-pop commit, half-loss retreat) ---
 (defconst preattack-towers-min 4)
+(defconst preattack-towers-fallback 2)
 (defconst preattack-fortify-vills 14)
 (defconst preattack-loss-half 2)
+(defconst preattack-recover-time 90)
+(defconst preattack-fortify-timeout 1200)
+(defconst preattack-recover-mpop-num 3)
+(defconst preattack-recover-mpop-den 4)
 
 ; --- Food raids + forward towers/castles near food targets ---
 (defconst raid-escort-group 15)

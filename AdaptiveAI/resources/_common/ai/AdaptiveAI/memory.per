@@ -66,6 +66,8 @@
 	(set-goal mem-raid-route 0)
 	(set-goal mem-raid-path-enemy 0)
 	(set-goal mem-raid-has-target 0)
+	(set-goal mem-attack-recover 0)
+	(set-goal mem-attack-recover-until 0)
 	(disable-self))
 
 ; Peak archer count (stepped thresholds)
@@ -154,4 +156,13 @@
 	(up-compare-goal mem-adapt-mode == adapt-balanced)
 =>
 	(set-goal mem-adapt-mode adapt-defensive)
+	(set-goal mem-rally-army 1))
+
+; Keep counter-adaptation when pressured (rally without wiping counter mode)
+(defrule
+	(up-compare-goal mem-attack-events >= 5)
+(or	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+(or	(up-compare-goal mem-adapt-mode == adapt-counter-cavalry)
+	(up-compare-goal mem-adapt-mode == adapt-counter-infantry)))
+=>
 	(set-goal mem-rally-army 1))

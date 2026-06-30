@@ -1,0 +1,60 @@
+;==============================================================================
+; AdaptiveAI v2.1 - Cross-module coordination (loads last; harmonizes tactics)
+; Resolves conflicts between fortify, preattack, raid, response, and military.
+;==============================================================================
+
+; ======================== RAID OFF DURING MAIN PUSH ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-attack-sustain == 1)
+=>
+	(set-goal mem-raid-active 0)
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-raid-retarget 0)
+	(set-goal mem-raid-build 0)
+	(set-goal mem-raid-has-site 0)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-has-target 0)
+	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-escort-group)
+	(up-reset-group c: raid-builder-group))
+
+; ======================== RE-FORTIFY WHEN RAIDED AFTER BASE DONE ========================
+(defrule
+	(goal inseln no)
+	(goal underattack yes)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-fortify-ready == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+	(up-compare-goal mem-wall-active != 1)
+	(building-type-count-total gate < fort-gate-cap)
+	(building-type-count-total wall-class < fort-wall-cap)
+(or	(wood-amount >= wall-start-wood)
+	(stone-amount >= fort-stone-min))
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== TOWER REQUEST ONLY WHILE SHORT ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(building-type-count-total tower-class >= preattack-towers-min)
+	(up-compare-goal mem-fortify-ready != 1)
+=>
+	(set-goal mem-tower-def-active 0))
+
+; ======================== COUNTER TRAINING DURING DEFENSIVE RAIDS ========================
+(defrule
+	(goal underattack yes)
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain != 1)
+(or	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+(or	(up-compare-goal mem-adapt-mode == adapt-counter-cavalry)
+	(up-compare-goal mem-adapt-mode == adapt-counter-infantry)))
+=>
+	(set-strategic-number sn-percent-attack-soldiers 60)
+	(set-strategic-number sn-number-attack-groups 1000))

@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v1.9 - Food raids + forward towers; flank routes avoid direct paths
+; AdaptiveAI v2.1 - Food raids in prep only; flank routes; forward towers with escort
 ; Main raiders detour around bigger enemy groups; builders + escort claim map control
 ;==============================================================================
 
@@ -11,8 +11,9 @@
 	(players-building-count target-player >= 1)
 	(up-compare-goal my-mpop g:>= raid-min-total)
 	(up-compare-goal villagercount >= eco-boom-vills-feudal)
-(or	(up-compare-goal mem-attack-lock == 1)
-	(up-compare-goal mem-attack-sustain == 1))
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-attack-recover != 1)
 =>
 	(set-goal mem-raid-active 1)
 	(set-goal mem-raid-pick 1)

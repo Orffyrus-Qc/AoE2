@@ -69,12 +69,15 @@
 =>
 	(set-strategic-number sn-stone-gatherer-percentage eco-stone-rush-pct))
 
-; Release economy bias once boom targets are met
+; Release economy bias once boom targets are met (not during active fortify)
 (defrule
 	(current-age >= feudal-age)
 	(up-compare-goal villagercount >= eco-boom-vills-castle)
 	(food-amount >= eco-boom-food-min)
 	(wood-amount >= eco-boom-wood-min)
+	(stone-amount >= fort-stone-min)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-tower-def-active != 1)
 	(strategic-number sn-food-gatherer-percentage >= 55)
 =>
 	(set-strategic-number sn-food-gatherer-percentage 0)

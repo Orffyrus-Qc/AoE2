@@ -172,12 +172,22 @@
 (defrule
 	(up-compare-goal mem-tower-def-active == 1)
 	(up-compare-goal mem-tower-def-slot >= tower-def-max)
+	(building-type-count-total tower-class >= preattack-towers-min)
 =>
 	(set-goal mem-tower-def-active 0))
 
 (defrule
 	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot >= tower-def-max)
+	(building-type-count-total tower-class < preattack-towers-min)
+=>
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
 	(building-type-count-total tower-class >= tower-def-built-max)
+	(building-type-count-total tower-class >= preattack-towers-min)
 =>
 	(set-goal mem-tower-def-active 0))
 
