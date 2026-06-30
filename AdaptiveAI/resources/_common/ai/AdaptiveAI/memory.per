@@ -1,0 +1,110 @@
+;==============================================================================
+; AdaptiveAI - In-match memory initialization and rolling trackers
+;==============================================================================
+
+(defrule
+	(true)
+=>
+	(set-goal mem-detected-opening opening-unknown)
+	(set-goal mem-enemy-archer-peak 0)
+	(set-goal mem-enemy-cav-peak 0)
+	(set-goal mem-enemy-infantry-peak 0)
+	(set-goal mem-attack-events 0)
+	(set-goal mem-aggression-score 0)
+	(set-goal mem-last-scout-tick 0)
+	(set-goal mem-adapt-mode adapt-balanced)
+	(set-goal mem-rally-army 0)
+	(set-goal mem-wall-active 0)
+	(set-goal mem-wall-phase wall-phase-idle)
+	(set-goal mem-wall-segments 0)
+	(set-goal mem-wall-stuck 0)
+	(set-goal mem-wall-dir wall-side-east)
+	(disable-self))
+
+; Peak archer count (stepped thresholds)
+(defrule
+	(players-unit-type-count any-enemy archer-line >= 5)
+	(up-compare-goal mem-enemy-archer-peak < 5)
+=>
+	(set-goal mem-enemy-archer-peak 5))
+(defrule
+	(players-unit-type-count any-enemy archer-line >= 10)
+	(up-compare-goal mem-enemy-archer-peak < 10)
+=>
+	(set-goal mem-enemy-archer-peak 10))
+(defrule
+	(players-unit-type-count any-enemy archer-line >= 15)
+	(up-compare-goal mem-enemy-archer-peak < 15)
+=>
+	(set-goal mem-enemy-archer-peak 15))
+(defrule
+	(players-unit-type-count any-enemy archer-line >= 20)
+	(up-compare-goal mem-enemy-archer-peak < 20)
+=>
+	(set-goal mem-enemy-archer-peak 20))
+
+; Peak scout/cavalry count
+(defrule
+	(players-unit-type-count any-enemy scout-cavalry-line >= 3)
+	(up-compare-goal mem-enemy-cav-peak < 3)
+=>
+	(set-goal mem-enemy-cav-peak 3))
+(defrule
+	(players-unit-type-count any-enemy scout-cavalry-line >= 6)
+	(up-compare-goal mem-enemy-cav-peak < 6)
+=>
+	(set-goal mem-enemy-cav-peak 6))
+(defrule
+	(players-unit-type-count any-enemy scout-cavalry-line >= 10)
+	(up-compare-goal mem-enemy-cav-peak < 10)
+=>
+	(set-goal mem-enemy-cav-peak 10))
+(defrule
+	(players-unit-type-count any-enemy scout-cavalry-line >= 15)
+	(up-compare-goal mem-enemy-cav-peak < 15)
+=>
+	(set-goal mem-enemy-cav-peak 15))
+
+; Peak infantry count
+(defrule
+	(players-unit-type-count any-enemy militiaman-line >= 4)
+	(up-compare-goal mem-enemy-infantry-peak < 4)
+=>
+	(set-goal mem-enemy-infantry-peak 4))
+(defrule
+	(players-unit-type-count any-enemy militiaman-line >= 8)
+	(up-compare-goal mem-enemy-infantry-peak < 8)
+=>
+	(set-goal mem-enemy-infantry-peak 8))
+(defrule
+	(players-unit-type-count any-enemy militiaman-line >= 12)
+	(up-compare-goal mem-enemy-infantry-peak < 12)
+=>
+	(set-goal mem-enemy-infantry-peak 12))
+
+; Aggression score: enemy commits feudal military early
+(defrule
+	(players-current-age any-enemy >= feudal-age)
+	(players-military-population any-enemy >= 8)
+	(game-time < detect-feudal-time-max)
+	(up-compare-goal mem-aggression-score < 10)
+=>
+	(up-modify-goal mem-aggression-score c:+ 1))
+
+; Track sustained raids on our base (feeds rally + heavy defense)
+(defrule
+	(goal underattack yes)
+	(game-time >= mem-last-scout-tick)
+	(up-compare-goal mem-attack-events < 20)
+=>
+	(up-modify-goal mem-attack-events c:+ 1)
+	(up-modify-goal mem-last-scout-tick g:= game-time)
+	(up-modify-goal mem-last-scout-tick c:+ 45))
+
+; Switch to defensive posture after repeated enemy attacks
+(defrule
+	(up-compare-goal mem-attack-events >= 5)
+	(up-compare-goal mem-adapt-mode == adapt-balanced)
+=>
+	(set-goal mem-adapt-mode adapt-defensive)
+	(set-goal mem-rally-army 1))

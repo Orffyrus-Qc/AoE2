@@ -1,0 +1,314 @@
+;==============================================================================
+; AdaptiveAI v0.7 - Palisade box + gate around TC (recompute every tick)
+; Independent of Promisory CENTER-WALL. Stateless geometry avoids stale corners.
+;==============================================================================
+
+; ======================== DONE / ABORT ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+=>
+	(do-nothing))
+
+(defrule
+	(goal inseln yes)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+=>
+	(set-goal mem-wall-phase wall-phase-done))
+
+(defrule
+	(game-time >= wall-time-max)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+(defrule
+	(building-type-count-total gate >= 1)
+	(building-type-count palisade-wall >= wall-complete-palisade)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+; ======================== ARM WALLING ========================
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(goal underattack yes)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening != opening-unknown)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-rally-army == 1)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening == opening-drush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening == opening-maa-flush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening == opening-scout-rush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-detected-opening == opening-archer-rush)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-aggression-score >= wall-trigger-aggression)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-adapt-mode == adapt-defensive)
+=>
+	(set-goal mem-wall-active 1))
+
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(game-time < wall-time-max)
+	(up-compare-goal mem-attack-events >= wall-trigger-raids)
+	(current-age >= feudal-age)
+=>
+	(set-goal mem-wall-active 1))
+
+; Proactive feudal box if nothing else triggered by mid-feudal
+(defrule
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(current-age <= castle-age)
+	(game-time >= wall-proactive-time)
+	(game-time < wall-time-max)
+=>
+	(set-goal mem-wall-active 1))
+
+; ======================== START BUILDING ========================
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-idle)
+	(building-type-count town-center >= 1)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(wood-amount >= wall-start-wood)
+=>
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-dir wall-side-east)
+	(set-goal mem-wall-stuck 0)
+	(set-goal mem-wall-phase wall-phase-build))
+
+; ======================== REFRESH TC BOX (EVERY TICK IN BUILD) ========================
+; Corners: point-x SE, point2-x NE, point3-x NW, point4-x SW
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ wall-box-padding)
+	(up-modify-goal point2-y c:+ wall-box-padding)
+	(up-modify-goal point3-x c:- wall-box-padding)
+	(up-modify-goal point3-y c:+ wall-box-padding)
+	(up-modify-goal point4-x c:- wall-box-padding)
+	(up-modify-goal point4-y c:- wall-box-padding)
+	(up-modify-goal point-x c:+ wall-box-padding)
+	(up-modify-goal point-y c:- wall-box-padding)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+; ======================== GATE (EAST EDGE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+(or	(building-type-count-total gate >= 1)
+	(building-type-count palisade-gate4 > 0))
+=>
+	(do-nothing))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count-total gate < 1)
+	(building-type-count palisade-gate4 < 1)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count-total gate < 1)
+	(building-type-count palisade-gate4 < 1)
+	(up-compare-goal mem-wall-stuck >= wall-gate-retry-max)
+=>
+	(do-nothing))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count-total gate < 1)
+	(building-type-count palisade-gate4 < 1)
+	(up-point-contains saved-point-x c: tree-class)
+	(up-compare-goal mem-wall-stuck < wall-gate-retry-max)
+=>
+	(up-modify-goal mem-wall-stuck c:+ 1)
+	(up-lerp-percent saved-point-x point-x c: 40)
+	(up-lerp-percent saved-point-x point2-x c: 60))
+
+; ======================== FINISH WHEN ENOUGH BUILT ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments >= 4)
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(building-type-count palisade-wall >= wall-complete-palisade)
+(or	(building-type-count-total gate >= 1)
+	(building-type-count palisade-gate4 > 0))
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+; ======================== PERIMETER (ONE SIDE PER PASS) ========================
+; South: point4 -> point-x
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-compare-goal mem-wall-dir != wall-side-south)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point-x c: palisade-wall)
+=>
+	(up-build-line point4-x point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-north))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-compare-goal mem-wall-dir == wall-side-south)
+=>
+	(set-goal mem-wall-segments wall-side-north))
+
+; North: point3 -> point2
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-north)
+	(up-compare-goal mem-wall-dir != wall-side-north)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point3-x point2-x c: palisade-wall)
+=>
+	(up-build-line point3-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-west))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-north)
+	(up-compare-goal mem-wall-dir == wall-side-north)
+=>
+	(set-goal mem-wall-segments wall-side-west))
+
+; West: point4 -> point3
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-west)
+	(up-compare-goal mem-wall-dir != wall-side-west)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point4-x point3-x c: palisade-wall)
+=>
+	(up-build-line point4-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-side-east))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-west)
+	(up-compare-goal mem-wall-dir == wall-side-west)
+=>
+	(set-goal mem-wall-segments wall-side-east))
+
+; East: point-x -> point2 (skip if gate occupies this edge)
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir != wall-side-east)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < wall-pending-max)
+	(up-can-build-line point-x point2-x c: palisade-wall)
+=>
+	(up-build-line point-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments 4))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir == wall-side-east)
+=>
+	(set-goal mem-wall-segments 4))

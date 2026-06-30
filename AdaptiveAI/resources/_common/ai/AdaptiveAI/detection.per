@@ -1,0 +1,97 @@
+;==============================================================================
+; AdaptiveAI - Opening and playstyle detection (one-shot per opening)
+; Uses any-enemy so it works in 1v1 and team games.
+;==============================================================================
+
+; --- Drush: feudal barracks play + early militia ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-current-age any-enemy >= feudal-age)
+	(game-time < detect-feudal-time-max)
+	(players-building-type-count any-enemy barracks >= 1)
+	(players-unit-type-count any-enemy militiaman-line >= thresh-drush-militia)
+=>
+	(set-goal mem-detected-opening opening-drush)
+	(set-goal mem-adapt-mode adapt-counter-infantry)
+	(disable-self))
+
+; --- Scout rush ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-current-age any-enemy >= feudal-age)
+	(game-time < detect-feudal-time-max)
+	(players-building-type-count any-enemy stable >= 1)
+	(players-unit-type-count any-enemy scout-cavalry-line >= thresh-scout-count)
+=>
+	(set-goal mem-detected-opening opening-scout-rush)
+	(set-goal mem-adapt-mode adapt-counter-cavalry)
+	(disable-self))
+
+; --- Archer rush ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-current-age any-enemy >= feudal-age)
+	(game-time < detect-feudal-time-max)
+	(players-building-type-count any-enemy archery-range >= 1)
+	(players-unit-type-count any-enemy archer-line >= thresh-archer-count)
+=>
+	(set-goal mem-detected-opening opening-archer-rush)
+	(set-goal mem-adapt-mode adapt-counter-archers)
+	(disable-self))
+
+; --- Men-at-arms / militia flush (no drush tag yet, high infantry count) ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-current-age any-enemy >= feudal-age)
+	(game-time < detect-feudal-time-max)
+	(players-unit-type-count any-enemy militiaman-line >= thresh-maa-count)
+=>
+	(set-goal mem-detected-opening opening-maa-flush)
+	(set-goal mem-adapt-mode adapt-counter-infantry)
+	(disable-self))
+
+; --- Fast Castle: castle age with low feudal military commitment ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-current-age any-enemy >= castle-age)
+	(game-time < detect-castle-time-max)
+	(up-compare-goal mem-enemy-infantry-peak < thresh-low-military-fc)
+	(up-compare-goal mem-enemy-archer-peak < thresh-low-military-fc)
+	(up-compare-goal mem-enemy-cav-peak < thresh-low-military-fc)
+=>
+	(set-goal mem-detected-opening opening-fast-castle)
+	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(disable-self))
+
+; --- Mid-game re-adaptation: player pivots to mass archers after feudal ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-archer-rush)
+	(up-compare-goal mem-enemy-archer-peak >= 15)
+	(players-current-age any-enemy >= castle-age)
+=>
+	(set-goal mem-detected-opening opening-archer-rush)
+	(set-goal mem-adapt-mode adapt-counter-archers)
+	(set-goal mem-rally-army 1)
+	(disable-self))
+
+; --- Mid-game re-adaptation: player pivots to heavy cavalry ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-scout-rush)
+	(up-compare-goal mem-enemy-cav-peak >= 10)
+	(players-current-age any-enemy >= castle-age)
+=>
+	(set-goal mem-detected-opening opening-scout-rush)
+	(set-goal mem-adapt-mode adapt-counter-cavalry)
+	(set-goal mem-rally-army 1)
+	(disable-self))
+
+; --- Mid-game re-adaptation: player pivots to mass infantry ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-maa-flush)
+	(up-compare-goal mem-enemy-infantry-peak >= 12)
+	(players-current-age any-enemy >= castle-age)
+=>
+	(set-goal mem-detected-opening opening-maa-flush)
+	(set-goal mem-adapt-mode adapt-counter-infantry)
+	(set-goal mem-rally-army 1)
+	(disable-self))

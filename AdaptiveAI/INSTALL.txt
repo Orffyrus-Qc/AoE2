@@ -1,0 +1,35 @@
+AdaptiveAI test pack — install on another PC
+============================================
+
+REQUIREMENTS
+- Age of Empires II: Definitive Edition installed (Steam or Microsoft Store)
+- Windows PC
+
+OPTION A — Automatic (recommended)
+1. Extract the zip so you have a folder named "AdaptiveAI"
+2. Open that folder
+3. Right-click install.ps1 -> Run with PowerShell
+   (If blocked: open PowerShell, run: Set-ExecutionPolicy -Scope Process Bypass)
+4. Launch AoE2 DE
+
+OPTION B — Manual copy
+1. Extract the zip
+2. Copy the whole "AdaptiveAI" folder to:
+   %USERPROFILE%\Games\Age of Empires 2 DE\mods\local\AdaptiveAI
+   (Create the "mods\local" folders if they do not exist.)
+3. Launch AoE2 DE
+
+IN-GAME
+1. Mod Manager -> Local -> AdaptiveAI -> Enable
+2. Single Player -> Load Scenario -> "AdaptiveAI 1v1 Test"
+3. Start the game
+
+WHAT TO TEST
+Try different openings (drush, scouts, archers, MAA, fast castle) and mid-game pivots.
+The AI adapts silently — watch for counter units, grouped attacks, and a palisade
+box with gate around the TC and nearby buildings when you drush, MAA flush, or raid.
+
+TROUBLESHOOTING
+- Mod missing: confirm folder is under Games\Age of Empires 2 DE\mods\local\AdaptiveAI
+- Scenario missing: restart the game after enabling the mod
+- AI not adapting: scout the enemy so the AI can see your units and buildings
