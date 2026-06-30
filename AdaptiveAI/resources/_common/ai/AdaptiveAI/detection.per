@@ -50,6 +50,27 @@
 	(set-goal mem-adapt-mode adapt-counter-infantry)
 	(disable-self))
 
+; --- Water aggression: dock + galleys ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-building-type-count any-enemy dock >= 1)
+	(players-unit-type-count any-enemy galley-line >= thresh-water-galleys)
+=>
+	(set-goal mem-detected-opening opening-water)
+	(set-goal mem-adapt-mode adapt-counter-archers)
+	(disable-self))
+
+; --- Economic boom: multiple TCs, low military ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-unknown)
+	(players-building-type-count any-enemy town-center >= thresh-boom-tc)
+	(players-military-population any-enemy < thresh-boom-mil-max)
+	(players-current-age any-enemy >= feudal-age)
+=>
+	(set-goal mem-detected-opening opening-boom)
+	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(disable-self))
+
 ; --- Fast Castle: castle age with low feudal military commitment ---
 (defrule
 	(up-compare-goal mem-detected-opening == opening-unknown)
@@ -61,6 +82,42 @@
 =>
 	(set-goal mem-detected-opening opening-fast-castle)
 	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(disable-self))
+
+; --- Castle: siege push detected ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-siege)
+	(players-current-age any-enemy >= castle-age)
+	(players-building-type-count any-enemy siege-workshop >= 1)
+	(up-compare-goal mem-enemy-siege-peak >= 1)
+=>
+	(set-goal mem-detected-opening opening-siege)
+	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(set-goal mem-rally-army 1)
+	(disable-self))
+
+; --- Castle: monk/smush detected ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-smush)
+	(players-current-age any-enemy >= castle-age)
+	(players-building-type-count any-enemy monastery >= 1)
+	(up-compare-goal mem-enemy-monk-peak >= thresh-smush-monks)
+=>
+	(set-goal mem-detected-opening opening-smush)
+	(set-goal mem-adapt-mode adapt-counter-infantry)
+	(set-goal mem-rally-army 1)
+	(disable-self))
+
+; --- Mid-game: enemy added extra TCs (boom pivot) ---
+(defrule
+	(up-compare-goal mem-detected-opening != opening-boom)
+	(up-compare-goal mem-enemy-tc-count >= thresh-boom-tc)
+	(players-military-population any-enemy < thresh-boom-mil-max)
+	(players-current-age any-enemy >= castle-age)
+=>
+	(set-goal mem-detected-opening opening-boom)
+	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(set-goal mem-rally-army 1)
 	(disable-self))
 
 ; --- Mid-game re-adaptation: player pivots to mass archers after feudal ---

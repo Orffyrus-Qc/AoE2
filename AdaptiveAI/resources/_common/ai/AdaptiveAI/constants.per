@@ -10,6 +10,10 @@
 (defconst opening-archer-rush 3)
 (defconst opening-fast-castle 4)
 (defconst opening-maa-flush 5)
+(defconst opening-boom 6)
+(defconst opening-siege 7)
+(defconst opening-smush 8)
+(defconst opening-water 9)
 
 ; --- In-match memory goals (slots) ---
 (defconst mem-detected-opening 1900)
@@ -36,6 +40,13 @@
 (defconst mem-wall-tier 1921)
 (defconst mem-wall-gate-type 1922)
 (defconst mem-tower-wave 1923)
+(defconst mem-enemy-tc-count 1924)
+(defconst mem-enemy-castle-count 1925)
+(defconst mem-enemy-siege-peak 1926)
+(defconst mem-enemy-monk-peak 1927)
+(defconst mem-enemy-mil-peak 1928)
+(defconst mem-superiority-peak 1929)
+(defconst mem-peace-since 1930)
 
 ; --- Adaptation modes (values stored in mem-adapt-mode) ---
 (defconst adapt-balanced 0)
@@ -53,6 +64,17 @@
 (defconst thresh-archer-count 6)
 (defconst thresh-maa-count 8)
 (defconst thresh-low-military-fc 6)
+(defconst thresh-boom-tc 2)
+(defconst thresh-boom-mil-max 14)
+(defconst thresh-siege-rams 1)
+(defconst thresh-smush-monks 3)
+(defconst thresh-water-galleys 5)
+(defconst thresh-enemy-mil-20 20)
+(defconst thresh-enemy-mil-35 35)
+(defconst superior-ahead 1)
+(defconst superior-behind -1)
+(defconst peace-calm-time 120)
+(defconst eco-stone-rush-pct 12)
 
 ; --- Default attack wave sizes ---
 (defconst group-feudal-min 8)

@@ -1,0 +1,106 @@
+;==============================================================================
+; AdaptiveAI v1.3 - Rolling enemy intel (buildings, army, superiority)
+;==============================================================================
+
+; --- Enemy town centers / castles ---
+(defrule
+	(players-building-type-count any-enemy town-center >= 1)
+	(up-compare-goal mem-enemy-tc-count < 1)
+=>
+	(set-goal mem-enemy-tc-count 1))
+
+(defrule
+	(players-building-type-count any-enemy town-center >= 2)
+	(up-compare-goal mem-enemy-tc-count < 2)
+=>
+	(set-goal mem-enemy-tc-count 2))
+
+(defrule
+	(players-building-type-count any-enemy town-center >= 3)
+	(up-compare-goal mem-enemy-tc-count < 3)
+=>
+	(set-goal mem-enemy-tc-count 3))
+
+(defrule
+	(players-building-type-count any-enemy castle >= 1)
+	(up-compare-goal mem-enemy-castle-count < 1)
+=>
+	(set-goal mem-enemy-castle-count 1))
+
+(defrule
+	(players-building-type-count any-enemy castle >= 2)
+	(up-compare-goal mem-enemy-castle-count < 2)
+=>
+	(set-goal mem-enemy-castle-count 2))
+
+; --- Enemy siege presence ---
+(defrule
+	(players-unit-type-count any-enemy battering-ram-line >= 1)
+	(up-compare-goal mem-enemy-siege-peak < 1)
+=>
+	(set-goal mem-enemy-siege-peak 1))
+
+(defrule
+(or	(players-unit-type-count any-enemy battering-ram-line >= 2)
+(or	(players-unit-type-count any-enemy mangonel-line >= 1)
+	(players-unit-type-count any-enemy scorpion-line >= 1)))
+	(up-compare-goal mem-enemy-siege-peak < 2)
+=>
+	(set-goal mem-enemy-siege-peak 2))
+
+(defrule
+	(players-unit-type-count any-enemy battering-ram-line >= 4)
+	(up-compare-goal mem-enemy-siege-peak < 3)
+=>
+	(set-goal mem-enemy-siege-peak 3))
+
+; --- Enemy monks ---
+(defrule
+	(players-unit-type-count any-enemy monk >= 2)
+	(up-compare-goal mem-enemy-monk-peak < 2)
+=>
+	(set-goal mem-enemy-monk-peak 2))
+
+(defrule
+	(players-unit-type-count any-enemy monk >= thresh-smush-monks)
+	(up-compare-goal mem-enemy-monk-peak < thresh-smush-monks)
+=>
+	(set-goal mem-enemy-monk-peak thresh-smush-monks))
+
+(defrule
+	(players-unit-type-count any-enemy monk >= 6)
+	(up-compare-goal mem-enemy-monk-peak < 6)
+=>
+	(set-goal mem-enemy-monk-peak 6))
+
+; --- Enemy military population peaks ---
+(defrule
+	(players-military-population any-enemy >= thresh-enemy-mil-20)
+	(up-compare-goal mem-enemy-mil-peak < thresh-enemy-mil-20)
+=>
+	(set-goal mem-enemy-mil-peak thresh-enemy-mil-20))
+
+(defrule
+	(players-military-population any-enemy >= thresh-enemy-mil-35)
+	(up-compare-goal mem-enemy-mil-peak < thresh-enemy-mil-35)
+=>
+	(set-goal mem-enemy-mil-peak thresh-enemy-mil-35))
+
+; --- Military superiority peaks (when we had the advantage) ---
+(defrule
+	(strategic-number sn-military-superiority >= superior-ahead)
+	(up-compare-goal mem-superiority-peak < superior-ahead)
+=>
+	(set-goal mem-superiority-peak superior-ahead))
+
+(defrule
+	(strategic-number sn-military-superiority >= 2)
+	(up-compare-goal mem-superiority-peak < 2)
+=>
+	(set-goal mem-superiority-peak 2))
+
+(defrule
+	(strategic-number sn-military-superiority >= 3)
+	(up-compare-goal mem-superiority-peak < 3)
+=>
+	(set-goal mem-superiority-peak 3))

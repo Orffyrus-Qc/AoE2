@@ -57,6 +57,18 @@
 =>
 	(set-strategic-number sn-gold-gatherer-percentage 8))
 
+; Stone on demand: fortify/towers need stone now
+(defrule
+	(current-age >= castle-age)
+	(stone-amount < fort-stone-min)
+(or	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+(or	(up-compare-goal mem-tower-def-active == 1)
+(or	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-detected-opening == opening-siege))))
+	(strategic-number sn-stone-gatherer-percentage < eco-stone-rush-pct)
+=>
+	(set-strategic-number sn-stone-gatherer-percentage eco-stone-rush-pct))
+
 ; Release economy bias once boom targets are met
 (defrule
 	(current-age >= feudal-age)

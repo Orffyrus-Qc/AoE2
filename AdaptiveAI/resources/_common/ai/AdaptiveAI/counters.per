@@ -1,0 +1,125 @@
+;==============================================================================
+; AdaptiveAI v1.3 - Civ-aware counter unit steering (uses Promisory train goals)
+;==============================================================================
+
+; --- vs archers: skirms (plumes on meso) ---
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+(or	(civ-selected mayan)
+(or	(civ-selected aztec)
+	(civ-selected incan)))
+=>
+	(set-goal trainskirm yes)
+	(set-goal trainarcher yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+	(civ-selected gothic)
+=>
+	(set-goal allowspears yes)
+	(set-goal trainskirm yes)
+	(set-goal trainpike yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+(or	(civ-selected byzantine)
+	(civ-selected vietnamese))
+=>
+	(set-goal trainskirm yes)
+	(set-goal trainarcher yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-archers)
+=>
+	(set-goal trainskirm yes))
+
+; --- vs cavalry: spears or camels ---
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-cavalry)
+(or	(civ-selected indian)
+	(civ-selected saracen))
+	(current-age >= castle-age)
+=>
+	(set-goal traincamel yes)
+	(set-goal trainpike yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-cavalry)
+	(civ-selected gothic)
+=>
+	(set-goal allowspears yes)
+	(set-goal trainpike yes)
+	(set-goal trainhussar yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-cavalry)
+=>
+	(set-goal trainpike yes)
+	(set-goal trainhussar yes))
+
+; --- vs infantry / drush ---
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-infantry)
+	(civ-selected gothic)
+=>
+	(set-goal allowspears yes)
+	(set-goal trainpike yes)
+	(set-goal trainchamp yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-infantry)
+(or	(civ-selected aztec)
+(or	(civ-selected mayan)
+	(civ-selected incan)))
+=>
+	(set-goal trainpike yes)
+	(set-goal trainchamp yes)
+	(set-goal trainskirm yes))
+
+(defrule
+	(up-compare-goal mem-adapt-mode == adapt-counter-infantry)
+=>
+	(set-goal trainpike yes)
+	(set-goal trainchamp yes))
+
+; --- vs smush: monks when available ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-smush)
+(nor	(civ-selected aztec)
+(or	(civ-selected mayan)
+	(civ-selected incan)))
+	(current-age >= castle-age)
+=>
+	(set-goal trainmonk yes)
+	(set-goal trainpike yes)
+	(set-goal trainskirm yes))
+
+(defrule
+	(up-compare-goal mem-detected-opening == opening-smush)
+(or	(civ-selected aztec)
+(or	(civ-selected mayan)
+	(civ-selected incan)))
+=>
+	(set-goal trainpike yes)
+	(set-goal trainskirm yes)
+	(set-goal trainchamp yes))
+
+; --- vs siege: anti-siege + walls ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-siege)
+	(current-age >= castle-age)
+=>
+	(set-goal trainpike yes)
+	(set-goal trainskirm yes)
+	(set-goal trainscorpion yes)
+	(set-goal trainmangonel yes)
+	(set-goal mem-wall-active 1))
+
+; --- vs water: galleys when we have a dock ---
+(defrule
+	(up-compare-goal mem-detected-opening == opening-water)
+	(building-type-count dock >= 1)
+=>
+	(set-goal traingalley yes)
+	(set-goal trainfire yes)
+	(set-goal trainskirm yes))

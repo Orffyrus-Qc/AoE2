@@ -1,0 +1,77 @@
+;==============================================================================
+; AdaptiveAI v1.3 - Superiority governor (when to press, turtle, or release)
+;==============================================================================
+
+; Reset peace timer while under attack
+(defrule
+	(goal underattack yes)
+=>
+	(set-goal mem-peace-since 0))
+
+; Schedule defensive release after calm period
+(defrule
+	(goal underattack no)
+	(up-compare-goal mem-adapt-mode == adapt-defensive)
+	(up-compare-goal mem-peace-since == 0)
+	(up-compare-goal mem-attack-events >= 5)
+=>
+	(up-modify-goal mem-peace-since g:= game-time)
+	(up-modify-goal mem-peace-since c:+ peace-calm-time))
+
+; Release defensive mode when raids stop and we are not behind
+(defrule
+	(goal underattack no)
+	(up-compare-goal mem-adapt-mode == adapt-defensive)
+	(up-compare-goal mem-peace-since > 0)
+	(game-time >= mem-peace-since)
+	(strategic-number sn-military-superiority >= superior-behind)
+=>
+	(set-goal mem-adapt-mode adapt-balanced)
+	(set-goal mem-rally-army 0)
+	(set-goal mem-peace-since 0))
+
+; Behind and pressured: commit to defense
+(defrule
+	(goal underattack yes)
+	(strategic-number sn-military-superiority < superior-behind)
+	(up-compare-goal mem-adapt-mode == adapt-balanced)
+=>
+	(set-goal mem-adapt-mode adapt-defensive)
+	(set-goal mem-rally-army 1))
+
+; Ahead at castle: pressure (deny boom, punish FC)
+(defrule
+	(current-age >= castle-age)
+	(strategic-number sn-military-superiority >= superior-ahead)
+	(military-population >= group-castle-min)
+(or	(up-compare-goal mem-detected-opening == opening-fast-castle)
+(or	(up-compare-goal mem-detected-opening == opening-boom)
+	(up-compare-goal mem-enemy-tc-count >= thresh-boom-tc)))
+	(up-compare-goal mem-adapt-mode != adapt-pressure-castle)
+=>
+	(set-goal mem-adapt-mode adapt-pressure-castle)
+	(set-goal mem-tower-off-active 1))
+
+; Ahead with army: stop endless rally, let Promisory attack
+(defrule
+	(up-compare-goal mem-rally-army == 1)
+	(up-compare-goal attacking != yes)
+	(current-age >= castle-age)
+	(strategic-number sn-military-superiority >= superior-ahead)
+	(military-population >= group-castle-min)
+=>
+	(set-goal mem-rally-army 0))
+
+; Even trade, healthy eco: stage then push
+(defrule
+	(up-compare-goal mem-rally-army != 1)
+	(up-compare-goal attacking != yes)
+	(current-age >= castle-age)
+	(strategic-number sn-military-superiority >= 0)
+	(military-population >= group-castle-min)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+	(food-amount >= eco-boom-food-min)
+	(up-compare-goal mem-detected-opening != opening-unknown)
+=>
+	(set-goal mem-rally-army 1)
+	(set-goal attackmethod groups))

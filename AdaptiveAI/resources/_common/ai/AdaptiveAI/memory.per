@@ -14,6 +14,11 @@
 	(set-goal mem-last-scout-tick 0)
 	(set-goal mem-adapt-mode adapt-balanced)
 	(set-goal mem-rally-army 0)
+	(disable-self))
+
+(defrule
+	(true)
+=>
 	(set-goal mem-wall-active 0)
 	(set-goal mem-wall-phase wall-phase-idle)
 	(set-goal mem-wall-segments 0)
@@ -23,12 +28,29 @@
 	(set-goal mem-fort-wave 0)
 	(set-goal mem-wall-tier wall-tier-palisade)
 	(set-goal mem-wall-gate-type wall-gate-type0)
+	(disable-self))
+
+(defrule
+	(true)
+=>
 	(set-goal mem-tower-wave 0)
 	(set-goal mem-tower-def-active 0)
 	(set-goal mem-tower-off-active 0)
 	(set-goal mem-tower-def-slot 0)
 	(set-goal mem-tower-off-slot 0)
 	(set-goal mem-tower-stuck 0)
+	(set-goal mem-enemy-tc-count 0)
+	(set-goal mem-enemy-castle-count 0)
+	(set-goal mem-enemy-siege-peak 0)
+	(disable-self))
+
+(defrule
+	(true)
+=>
+	(set-goal mem-enemy-monk-peak 0)
+	(set-goal mem-enemy-mil-peak 0)
+	(set-goal mem-superiority-peak 0)
+	(set-goal mem-peace-since 0)
 	(disable-self))
 
 ; Peak archer count (stepped thresholds)

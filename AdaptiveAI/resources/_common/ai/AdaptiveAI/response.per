@@ -50,6 +50,40 @@
 	(set-goal mem-rally-army 1))
 
 (defrule
+	(up-compare-goal mem-detected-opening == opening-boom)
+=>
+	(set-goal strategy s-flush)
+	(set-goal trainarcher yes)
+	(set-goal trainhussar yes)
+	(set-goal mem-rally-army 1)
+	(set-goal mem-tower-off-active 1))
+
+(defrule
+	(up-compare-goal mem-detected-opening == opening-siege)
+=>
+	(set-goal allowspears yes)
+	(set-goal trainskirm yes)
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-rally-army 1))
+
+(defrule
+	(up-compare-goal mem-detected-opening == opening-smush)
+=>
+	(set-goal allowspears yes)
+	(set-goal trainskirm yes)
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-rally-army 1))
+
+(defrule
+	(up-compare-goal mem-detected-opening == opening-water)
+=>
+	(set-goal trainskirm yes)
+	(set-goal trainarcher yes)
+	(set-goal mem-rally-army 1))
+
+(defrule
 	(up-compare-goal mem-aggression-score >= 3)
 	(up-compare-goal mem-adapt-mode != adapt-pressure-castle)
 =>
