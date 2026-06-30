@@ -117,6 +117,31 @@
 	(set-goal mem-tower-stuck 0)
 	(set-goal trainbombard yes))
 
+; ======================== WAVE COMPLETE -> NEXT WAVE (only under pressure) ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot >= tower-def-max)
+	(up-compare-goal mem-tower-wave < fort-tower-wave-max)
+	(building-type-count-total tower-class < fort-tower-cap)
+(or	(goal underattack yes)
+(or	(up-compare-goal mem-attack-events >= 4)
+	(up-compare-goal mem-aggression-score >= wall-trigger-aggression)))
+=>
+	(up-modify-goal mem-tower-wave c:+ 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot >= tower-off-max)
+	(up-compare-goal mem-tower-wave < fort-tower-wave-max)
+	(building-type-count-total bombard-tower < fort-tower-cap)
+	(goal attacking yes)
+=>
+	(up-modify-goal mem-tower-wave c:+ 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal mem-tower-stuck 0))
+
 ; ======================== DONE CONDITIONS ========================
 (defrule
 	(up-compare-goal mem-tower-def-active == 1)
@@ -142,14 +167,20 @@
 =>
 	(set-goal mem-tower-off-active 0))
 
-; ======================== UPGRADE DEFENSIVE WATCH TOWERS ========================
+; ======================== TOWER UPGRADES (ALL TYPES) ========================
 (defrule
-	(up-compare-goal mem-tower-def-active == 1)
 	(current-age >= castle-age)
 	(can-research ri-guard-tower)
 	(building-type-count watch-tower >= 1)
 =>
 	(research ri-guard-tower))
+
+(defrule
+	(current-age >= imperial-age)
+	(can-research ri-bombard-tower)
+	(building-type-count guard-tower >= 1)
+=>
+	(research ri-bombard-tower))
 
 ; ======================== DEFENSIVE PLACEMENT (TC FLANKS) ========================
 ; Slot 0: TC pushed toward enemy approach

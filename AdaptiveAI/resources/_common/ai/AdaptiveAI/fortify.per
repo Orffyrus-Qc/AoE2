@@ -1,0 +1,559 @@
+;==============================================================================
+; AdaptiveAI v1.1 - Progressive fortification (walls/gates/towers through game)
+; Extends defense + towers with more sites, stone tiers, and repeating waves.
+;==============================================================================
+
+; ======================== GATE TYPE WRAP (0-3) ========================
+(defrule
+	(up-compare-goal mem-wall-gate-type >= 4)
+=>
+	(set-goal mem-wall-gate-type wall-gate-type0))
+
+; ======================== WALL TIER BY AGE (only with stable eco) ========================
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+	(food-amount >= eco-boom-food-min)
+	(up-compare-goal mem-wall-tier < wall-tier-stone)
+=>
+	(set-goal mem-wall-tier wall-tier-stone))
+
+(defrule
+	(current-age >= imperial-age)
+	(up-compare-goal mem-wall-tier < wall-tier-fortified)
+	(building-type-count-total stone-wall-line >= 8)
+=>
+	(set-goal mem-wall-tier wall-tier-fortified))
+
+; ======================== KEEP BUILDING (threat + eco gates only) ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time >= eco-fortify-time-min)
+	(game-time < wall-time-max)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+	(food-amount >= eco-boom-food-min)
+	(wood-amount >= wall-start-wood)
+	(building-type-count-total gate < fort-gate-cap)
+	(up-compare-goal mem-wall-phase == wall-phase-done)
+(or	(goal underattack yes)
+(or	(up-compare-goal mem-attack-events >= 4)
+(or	(up-compare-goal mem-aggression-score >= wall-trigger-aggression)
+(or	(up-compare-goal mem-adapt-mode == adapt-defensive)
+	(up-compare-goal mem-detected-opening != opening-unknown)))))
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-wall-phase wall-phase-build)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time >= eco-fortify-time-min)
+	(game-time < tower-time-max)
+	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+	(food-amount >= eco-boom-food-min)
+	(wood-amount >= tower-wood-min)
+	(building-type-count-total tower-class < tower-def-built-max)
+	(up-compare-goal mem-tower-def-active != 1)
+(or	(goal underattack yes)
+(or	(up-compare-goal mem-attack-events >= 3)
+(or	(up-compare-goal mem-adapt-mode == adapt-defensive)
+	(up-compare-goal mem-detected-opening != opening-unknown))))
+=>
+	(set-goal mem-tower-def-active 1)
+	(set-goal mem-tower-def-slot 0)
+	(set-goal mem-tower-stuck 0))
+
+(defrule
+	(goal inseln no)
+	(current-age >= castle-age)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+	(food-amount >= eco-boom-food-min)
+	(stone-amount >= tower-stone-min)
+	(game-time < tower-time-max)
+	(building-type-count-total bombard-tower < tower-off-built-max)
+	(up-compare-goal mem-tower-off-active != 1)
+	(goal attacking yes)
+=>
+	(set-goal mem-tower-off-active 1)
+	(set-goal mem-tower-off-slot 0)
+	(set-goal mem-tower-stuck 0)
+	(set-goal trainbombard yes))
+
+; ======================== EXTENDED CHOKE GEOMETRY (SITES 3-6) ========================
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-outer1)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-fort-wave)
+	(up-modify-goal temporary-goal c:* fort-wave-forward)
+	(up-modify-goal temporary-goal c:+ wall-choke-forward)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-copy-point point-x saved-point-x)
+	(up-copy-point point2-x saved-point-x)
+	(up-cross-tiles point-x position-self-x c: wall-choke-half)
+	(up-cross-tiles point2-x position-self-x c: wall-choke-half-neg))
+
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-outer2)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-fort-wave)
+	(up-modify-goal temporary-goal c:* fort-wave-forward)
+	(up-modify-goal temporary-goal c:+ wall-choke-forward)
+	(up-modify-goal temporary-goal c:+ fort-site-step)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-copy-point point-x saved-point-x)
+	(up-copy-point point2-x saved-point-x)
+	(up-cross-tiles point-x position-self-x c: wall-choke-half)
+	(up-cross-tiles point2-x position-self-x c: wall-choke-half-neg))
+
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-forward3)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-fort-wave)
+	(up-modify-goal temporary-goal c:* fort-wave-forward)
+	(up-modify-goal temporary-goal c:+ wall-choke-forward)
+	(up-modify-goal temporary-goal c:+ fort-site-step)
+	(up-modify-goal temporary-goal c:+ fort-site-step)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-copy-point point-x saved-point-x)
+	(up-copy-point point2-x saved-point-x)
+	(up-cross-tiles point-x position-self-x c: wall-choke-half)
+	(up-cross-tiles point2-x position-self-x c: wall-choke-half-neg))
+
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-forward4)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-fort-wave)
+	(up-modify-goal temporary-goal c:* fort-wave-forward)
+	(up-modify-goal temporary-goal c:+ wall-choke-forward-side)
+	(up-modify-goal temporary-goal c:+ fort-site-step)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-cross-tiles saved-point-x position-self-x c: wall-choke-cross)
+	(up-copy-point point-x saved-point-x)
+	(up-copy-point point2-x saved-point-x)
+	(up-cross-tiles point-x position-self-x c: wall-choke-half)
+	(up-cross-tiles point2-x position-self-x c: wall-choke-half-neg))
+
+; Stone ring behind TC (site 7, castle+)
+(defrule
+	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(current-age >= castle-age)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point-x)
+	(up-copy-point point2-x point-x)
+	(up-copy-point point3-x point-x)
+	(up-copy-point point4-x point-x)
+	(up-modify-goal point2-x c:+ 7)
+	(up-modify-goal point2-y c:+ 7)
+	(up-modify-goal point3-x c:- 7)
+	(up-modify-goal point3-y c:+ 7)
+	(up-modify-goal point4-x c:- 7)
+	(up-modify-goal point4-y c:- 7)
+	(up-modify-goal point-x c:+ 7)
+	(up-modify-goal point-y c:- 7)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+; ======================== ADVANCE EXTENDED SITES ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-outer1)
+	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
+=>
+	(set-goal mem-wall-site wall-site-outer2)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0)
+	(up-modify-goal mem-wall-gate-type c:+ 1))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-outer2)
+	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
+=>
+	(set-goal mem-wall-site wall-site-forward3)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0)
+	(up-modify-goal mem-wall-gate-type c:+ 1))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-forward3)
+	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
+=>
+	(set-goal mem-wall-site wall-site-forward4)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0)
+	(up-modify-goal mem-wall-gate-type c:+ 1))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-forward4)
+	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
+	(current-age >= castle-age)
+=>
+	(set-goal mem-wall-site wall-site-stone-ring)
+	(set-goal mem-wall-segments wall-side-south)
+	(set-goal mem-wall-stuck 0)
+	(up-modify-goal mem-wall-gate-type c:+ 1))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-forward4)
+	(up-compare-goal mem-wall-segments >= wall-choke-seg-done)
+	(current-age <= feudal-age)
+=>
+	(up-modify-goal mem-fort-wave c:+ 1)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(up-compare-goal mem-wall-segments >= 4)
+	(up-compare-goal mem-fort-wave < fort-wave-max)
+	(building-type-count-total gate < fort-gate-cap)
+=>
+	(up-modify-goal mem-fort-wave c:+ 1)
+	(set-goal mem-wall-site wall-site-outer1)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-fort-wave >= fort-wave-max)
+(or	(building-type-count-total gate >= fort-gate-cap)
+	(building-type-count-total wall-class >= fort-wall-cap))
+=>
+	(set-goal mem-wall-phase wall-phase-done)
+	(set-goal mem-wall-active 0))
+
+; ======================== ROTATING GATES (PALISADE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type0)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type1)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type2)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type3)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== ROTATING GATES (STONE, CASTLE+) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type0)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type1)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type2)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-gate-type == wall-gate-type3)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-left)
+	(set-goal mem-wall-stuck 0))
+
+; ======================== EXTENDED CHOKE WALL LINES (PALISADE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-site < wall-site-stone-ring)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-left)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line point-x saved-point-x c: palisade-wall)
+=>
+	(up-build-line point-x saved-point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-right))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-site < wall-site-stone-ring)
+	(up-compare-goal mem-wall-tier == wall-tier-palisade)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-right)
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line saved-point-x point2-x c: palisade-wall)
+=>
+	(up-build-line saved-point-x point2-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-choke-seg-done))
+
+; ======================== EXTENDED CHOKE WALL LINES (STONE) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-site < wall-site-stone-ring)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-left)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line point-x saved-point-x c: stone-wall)
+=>
+	(up-build-line point-x saved-point-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-right))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-outer1)
+	(up-compare-goal mem-wall-site < wall-site-stone-ring)
+	(up-compare-goal mem-wall-tier >= wall-tier-stone)
+	(current-age >= castle-age)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-right)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line saved-point-x point2-x c: stone-wall)
+=>
+	(up-build-line saved-point-x point2-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-choke-seg-done))
+
+; ======================== STONE RING PERIMETER (SITE 7) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line point4-x point-x c: stone-wall)
+=>
+	(up-build-line point4-x point-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-side-north))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(up-compare-goal mem-wall-segments == wall-side-north)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line point3-x point2-x c: stone-wall)
+=>
+	(up-build-line point3-x point2-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-side-west))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(up-compare-goal mem-wall-segments == wall-side-west)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line point4-x point3-x c: stone-wall)
+=>
+	(up-build-line point4-x point3-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments wall-side-east))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-stone-ring)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(stone-amount >= fort-stone-min)
+	(up-can-build-line point-x point2-x c: stone-wall)
+=>
+	(up-build-line point-x point2-x c: stone-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-segments 4))
+
+; ======================== EXTRA TOWER SLOTS (2-5) ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 2)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-tower-wave)
+	(up-modify-goal temporary-goal c:* 2)
+	(up-modify-goal temporary-goal c:+ 18)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 3)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object saved-point-x)
+	(up-modify-goal temporary-goal g:= mem-tower-wave)
+	(up-modify-goal temporary-goal c:* 2)
+	(up-modify-goal temporary-goal c:+ 22)
+	(up-lerp-tiles saved-point-x enemy-x g: temporary-goal)
+	(up-cross-tiles saved-point-x position-self-x c: tower-def-cross))
+
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(up-compare-goal mem-tower-def-slot == 4)
+=>
+	(up-copy-point saved-point-x position-self-x)
+	(up-lerp-percent saved-point-x enemy-x c: 55))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot == 2)
+	(current-age >= castle-age)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: 72))
+
+(defrule
+	(up-compare-goal mem-tower-off-active == 1)
+	(up-compare-goal mem-tower-off-slot == 3)
+	(current-age >= castle-age)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: 80)
+	(up-cross-tiles temporary-point-x enemy-x c: tower-off-cross))
+
+; ======================== BUILD GUARD TOWERS (CASTLE, UPGRADED WATCHES) ========================
+(defrule
+	(up-compare-goal mem-tower-def-active == 1)
+	(current-age >= castle-age)
+	(stone-amount >= tower-stone-min)
+	(building-type-count guard-tower < 4)
+	(research-completed ri-guard-tower)
+	(up-compare-goal mem-tower-def-slot < 6)
+	(up-can-build-line 0 saved-point-x c: watch-tower-building)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: watch-tower-building)
+	(up-assign-builders c: watch-tower c: 3)
+	(up-modify-goal mem-tower-def-slot c:+ 1)
+	(set-goal mem-tower-stuck 0))

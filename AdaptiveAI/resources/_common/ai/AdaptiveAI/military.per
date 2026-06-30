@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v4 - Full group military system
+; AdaptiveAI v1.0 - Full group military system + population-scaled blobs
 ; 1) Anti-TSA stream   2) Age-scaled waves   3) Opening/adapt profiles
 ; 4) Siege+escort     5) Defend groups      6) Pre-attack rally
 ;==============================================================================
@@ -95,11 +95,11 @@
 (defrule
 	(up-compare-goal attacking != yes)
 	(military-population >= group-rally-min)
-(or	(players-military-population any-enemy >= 3)
+(or	(players-military-population any-enemy >= 8)
 (or	(up-compare-goal mem-detected-opening != opening-unknown)
-(or	(up-compare-goal mem-aggression-score >= 2)
+(or	(up-compare-goal mem-aggression-score >= 4)
 (or	(up-compare-goal mem-adapt-mode == adapt-pressure-castle)
-	(up-compare-goal mem-attack-events >= 2)))))
+	(up-compare-goal mem-attack-events >= 4)))))
 =>
 	(set-goal mem-rally-army 1)
 	(set-goal attackmethod groups)
@@ -228,37 +228,147 @@
 	(up-modify-sn sn-maximum-attack-group-size c:min group-imp-max)
 	(up-modify-sn sn-maximum-attack-group-size c:max 60))
 
-; Scale wave size with army at feudal / castle (bigger army = bigger chunks)
+; ======================== 7) POPULATION-SCALED GROUP SIZES ========================
+; Rally staging: bigger blob before committing to attack
+(defrule
+	(up-compare-goal mem-rally-army == 1)
+	(up-compare-goal attacking != yes)
+	(strategic-number sn-current-age == feudal)
+	(military-population >= group-scale-mpop-feudal)
+=>
+	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-feudal)
+	(up-modify-sn sn-minimum-attack-group-size c:min group-rally-min)
+	(up-modify-sn sn-minimum-attack-group-size c:max group-rally-max)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-feudal)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-rally-max))
+
+(defrule
+	(up-compare-goal mem-rally-army == 1)
+	(up-compare-goal attacking != yes)
+	(strategic-number sn-current-age >= castlea)
+	(military-population >= group-scale-mpop-castle)
+=>
+	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-castle)
+	(up-modify-sn sn-minimum-attack-group-size c:min group-rally-castle-min)
+	(up-modify-sn sn-minimum-attack-group-size c:max group-rally-castle-max)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-castle)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-rally-castle-max))
+
+; Attack waves: scale min + max with military population
 (defrule
 	(goal attacking yes)
 	(strategic-number sn-current-age == feudal)
-	(military-population >= 12)
+	(military-population >= group-scale-mpop-feudal)
 =>
 	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-minimum-attack-group-size c:/ 4)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-feudal)
 	(up-modify-sn sn-minimum-attack-group-size c:min group-feudal-min)
-	(up-modify-sn sn-minimum-attack-group-size c:max group-feudal-max))
+	(up-modify-sn sn-minimum-attack-group-size c:max group-feudal-max)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-feudal)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-feudal-max))
 
 (defrule
 	(goal attacking yes)
 	(strategic-number sn-current-age == castlea)
-	(military-population >= 20)
+	(military-population >= group-scale-mpop-castle)
 =>
 	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-minimum-attack-group-size c:/ 3)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-castle)
 	(up-modify-sn sn-minimum-attack-group-size c:min group-castle-min)
-	(up-modify-sn sn-minimum-attack-group-size c:max group-castle-max))
+	(up-modify-sn sn-minimum-attack-group-size c:max group-castle-max)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-castle)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-castle-max))
 
-; Scale minimum wave with army size at imperial (bigger army = bigger chunks)
 (defrule
 	(goal attacking yes)
 	(strategic-number sn-current-age >= imperial)
-	(military-population >= 35)
+	(military-population >= group-scale-mpop-imp)
 =>
 	(up-modify-sn sn-minimum-attack-group-size g:max my-mpop)
-	(up-modify-sn sn-minimum-attack-group-size c:/ 3)
+	(up-modify-sn sn-minimum-attack-group-size c:/ group-scale-div-min-imp)
 	(up-modify-sn sn-minimum-attack-group-size c:min group-imp-min)
-	(up-modify-sn sn-minimum-attack-group-size c:max 28))
+	(up-modify-sn sn-minimum-attack-group-size c:max group-imp-max)
+	(up-modify-sn sn-maximum-attack-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-attack-group-size c:/ group-scale-div-max-imp)
+	(up-modify-sn sn-maximum-attack-group-size c:min sn-minimum-attack-group-size)
+	(up-modify-sn sn-maximum-attack-group-size g:max allowed-num-military)
+	(up-modify-sn sn-maximum-attack-group-size c:min group-imp-max)
+	(up-modify-sn sn-maximum-attack-group-size c:max group-scale-imp-max-cap))
+
+; Defense: larger gather blobs as army grows
+(defrule
+	(goal underattack yes)
+	(military-population >= group-defend-min)
+=>
+	(up-modify-sn sn-minimum-defend-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-defend-group-size c:/ group-scale-div-min-castle)
+	(up-modify-sn sn-minimum-defend-group-size c:min group-defend-min)
+	(up-modify-sn sn-minimum-defend-group-size c:max group-defend-max)
+	(up-modify-sn sn-maximum-defend-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-defend-group-size c:/ group-scale-div-max-castle)
+	(up-modify-sn sn-maximum-defend-group-size c:min sn-minimum-defend-group-size)
+	(up-modify-sn sn-maximum-defend-group-size c:max group-defend-max))
+
+(defrule
+	(goal underattack yes)
+	(military-population >= group-defend-heavy-min)
+(or	(up-compare-goal mem-detected-opening == opening-drush)
+(or	(up-compare-goal mem-detected-opening == opening-maa-flush)
+(or	(up-compare-goal mem-aggression-score >= 4)
+	(up-compare-goal mem-attack-events >= 4))))
+=>
+	(up-modify-sn sn-minimum-defend-group-size g:max my-mpop)
+	(up-modify-sn sn-minimum-defend-group-size c:/ group-scale-div-min-imp)
+	(up-modify-sn sn-minimum-defend-group-size c:min group-defend-heavy-min)
+	(up-modify-sn sn-minimum-defend-group-size c:max group-defend-heavy-max)
+	(up-modify-sn sn-maximum-defend-group-size g:max my-mpop)
+	(up-modify-sn sn-maximum-defend-group-size c:/ group-scale-div-max-imp)
+	(up-modify-sn sn-maximum-defend-group-size c:min sn-minimum-defend-group-size)
+	(up-modify-sn sn-maximum-defend-group-size c:max group-defend-heavy-max))
+
+; Total population tiers: extra bump to attack + defend group caps
+(defrule
+	(population >= group-scale-pop-tier1)
+(or	(goal attacking yes)
+(or	(up-compare-goal mem-rally-army == 1)
+	(goal underattack yes)))
+=>
+	(up-modify-sn sn-minimum-attack-group-size c:+ group-scale-pop-boost1)
+	(up-modify-sn sn-maximum-attack-group-size c:+ group-scale-pop-max-boost1)
+	(up-modify-sn sn-minimum-defend-group-size c:+ group-scale-pop-boost1)
+	(up-modify-sn sn-maximum-defend-group-size c:+ group-scale-pop-max-boost1))
+
+(defrule
+	(population >= group-scale-pop-tier2)
+(or	(goal attacking yes)
+(or	(up-compare-goal mem-rally-army == 1)
+	(goal underattack yes)))
+=>
+	(up-modify-sn sn-minimum-attack-group-size c:+ group-scale-pop-boost2)
+	(up-modify-sn sn-maximum-attack-group-size c:+ group-scale-pop-max-boost2)
+	(up-modify-sn sn-minimum-defend-group-size c:+ group-scale-pop-boost2)
+	(up-modify-sn sn-maximum-defend-group-size c:+ group-scale-pop-max-boost2))
+
+(defrule
+	(population >= group-scale-pop-tier3)
+(or	(goal attacking yes)
+(or	(up-compare-goal mem-rally-army == 1)
+	(goal underattack yes)))
+=>
+	(up-modify-sn sn-minimum-attack-group-size c:+ group-scale-pop-boost2)
+	(up-modify-sn sn-maximum-attack-group-size c:+ group-scale-pop-max-boost3)
+	(up-modify-sn sn-minimum-defend-group-size c:+ group-scale-pop-boost2)
+	(up-modify-sn sn-maximum-defend-group-size c:+ group-scale-pop-max-boost3))
 
 ; ======================== 4) SIEGE + ESCORT ===========================
 (defrule

@@ -1,0 +1,71 @@
+;==============================================================================
+; AdaptiveAI v1.2 - Economy protection (feudal/castle boom before fortify)
+; Keeps villager momentum; limits gold/stone over-commit during growth.
+;==============================================================================
+
+; Keep training villagers through feudal/castle boom
+(defrule
+	(current-age >= feudal-age)
+	(current-age <= castle-age)
+	(up-compare-goal villagercount < eco-boom-vills-feudal)
+	(goal trainvillager no)
+	(food-amount >= 100)
+=>
+	(set-goal trainvillager yes))
+
+(defrule
+	(current-age >= castle-age)
+	(up-compare-goal villagercount < eco-boom-vills-castle)
+	(goal trainvillager no)
+	(food-amount >= 200)
+=>
+	(set-goal trainvillager yes))
+
+; Feudal: prioritize food + wood over gold/stone until boom targets met
+(defrule
+	(current-age == feudal-age)
+	(up-compare-goal villagercount < eco-boom-vills-feudal)
+	(strategic-number sn-food-gatherer-percentage < 55)
+=>
+	(set-strategic-number sn-food-gatherer-percentage 55)
+	(set-strategic-number sn-wood-gatherer-percentage 35)
+	(set-strategic-number sn-gold-gatherer-percentage 5)
+	(set-strategic-number sn-stone-gatherer-percentage 5))
+
+(defrule
+	(current-age == feudal-age)
+	(up-compare-goal villagercount < eco-boom-vills-feudal)
+	(food-amount < eco-boom-food-min)
+	(strategic-number sn-gold-gatherer-percentage > 8)
+=>
+	(set-strategic-number sn-gold-gatherer-percentage 5)
+	(set-strategic-number sn-stone-gatherer-percentage 3))
+
+; Castle: cap stone/gold until food stockpile is healthy
+(defrule
+	(current-age >= castle-age)
+	(food-amount < eco-boom-food-min)
+	(strategic-number sn-stone-gatherer-percentage > eco-stone-vills-max)
+=>
+	(set-strategic-number sn-stone-gatherer-percentage eco-stone-vills-max))
+
+(defrule
+	(current-age >= castle-age)
+	(food-amount < eco-boom-food-min)
+	(wood-amount < eco-boom-wood-min)
+	(strategic-number sn-gold-gatherer-percentage > 10)
+=>
+	(set-strategic-number sn-gold-gatherer-percentage 8))
+
+; Release economy bias once boom targets are met
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal villagercount >= eco-boom-vills-castle)
+	(food-amount >= eco-boom-food-min)
+	(wood-amount >= eco-boom-wood-min)
+	(strategic-number sn-food-gatherer-percentage >= 55)
+=>
+	(set-strategic-number sn-food-gatherer-percentage 0)
+	(set-strategic-number sn-wood-gatherer-percentage 0)
+	(set-strategic-number sn-gold-gatherer-percentage 0)
+	(set-strategic-number sn-stone-gatherer-percentage 0))

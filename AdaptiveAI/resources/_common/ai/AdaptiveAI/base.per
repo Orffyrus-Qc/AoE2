@@ -30,7 +30,7 @@
 (defrule
 	(current-age == dark-age)
 	(research-available ri-loom)
-	(research ri-loom != research-done)
+	(not(research-completed ri-loom))
 =>
 	(research ri-loom))
 
