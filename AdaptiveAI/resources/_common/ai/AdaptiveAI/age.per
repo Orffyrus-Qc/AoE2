@@ -1,0 +1,103 @@
+;==============================================================================
+; AdaptiveAI v3.1 - Age upgrades: highest priority (feudal → castle → imperial)
+; Escrow research every tick; food focus while an age is available but pending.
+;==============================================================================
+
+(defrule
+	(true)
+=>
+	(set-strategic-number sn-maximum-food-gather-percentage 100)
+	(disable-self))
+
+; ======================== FEUDAL AGE (ASAP) ========================
+(defrule
+	(current-age == dark-age)
+	(can-research-with-escrow ri-feudal-age)
+=>
+	(research ri-feudal-age))
+
+(defrule
+	(current-age == dark-age)
+	(research-available ri-feudal-age)
+	(not(research-completed ri-feudal-age))
+=>
+	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
+	(set-strategic-number sn-wood-gatherer-percentage eco-age-wood-priority)
+	(set-strategic-number sn-gold-gatherer-percentage 3)
+	(set-strategic-number sn-stone-gatherer-percentage 2))
+
+(defrule
+	(current-age == dark-age)
+	(research-available ri-feudal-age)
+	(not(research-completed ri-feudal-age))
+	(goal trainvillager no)
+	(can-train villager)
+	(civilian-population < eco-age-vills-dark)
+=>
+	(set-goal trainvillager yes))
+
+; ======================== CASTLE AGE (ASAP) ========================
+(defrule
+	(current-age == feudal-age)
+	(can-research-with-escrow ri-castle-age)
+=>
+	(research ri-castle-age))
+
+(defrule
+	(current-age == feudal-age)
+	(research-available ri-castle-age)
+	(not(research-completed ri-castle-age))
+=>
+	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
+	(set-strategic-number sn-wood-gatherer-percentage eco-age-wood-priority)
+	(set-strategic-number sn-gold-gatherer-percentage 8)
+	(set-strategic-number sn-stone-gatherer-percentage 4))
+
+(defrule
+	(current-age == feudal-age)
+	(research-available ri-castle-age)
+	(not(research-completed ri-castle-age))
+	(building-type-count town-center < 2)
+	(can-build-with-escrow town-center)
+	(wood-amount >= 275)
+	(stone-amount >= 100)
+=>
+	(build town-center))
+
+; ======================== IMPERIAL AGE (ASAP) ========================
+(defrule
+	(current-age == castle-age)
+	(can-research-with-escrow ri-imperial-age)
+=>
+	(research ri-imperial-age))
+
+(defrule
+	(current-age == castle-age)
+	(research-available ri-imperial-age)
+	(not(research-completed ri-imperial-age))
+=>
+	(set-strategic-number sn-food-gatherer-percentage eco-age-food-priority)
+	(set-strategic-number sn-wood-gatherer-percentage 22)
+	(set-strategic-number sn-gold-gatherer-percentage 12)
+	(set-strategic-number sn-stone-gatherer-percentage 6))
+
+(defrule
+	(current-age == castle-age)
+	(research-available ri-imperial-age)
+	(not(research-completed ri-imperial-age))
+	(building-type-count town-center < 3)
+	(can-build-with-escrow town-center)
+	(wood-amount >= 275)
+	(stone-amount >= 100)
+=>
+	(build town-center))
+
+; ======================== RELEASE FOOD BIAS AFTER IMPERIAL ========================
+(defrule
+	(current-age >= imperial-age)
+	(strategic-number sn-food-gatherer-percentage >= eco-age-food-priority)
+=>
+	(set-strategic-number sn-food-gatherer-percentage 0)
+	(set-strategic-number sn-wood-gatherer-percentage 0)
+	(set-strategic-number sn-gold-gatherer-percentage 0)
+	(set-strategic-number sn-stone-gatherer-percentage 0))

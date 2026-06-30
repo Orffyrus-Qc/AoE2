@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v2.9 - Economy: boom guards + wood/stone priority for fortify
+; AdaptiveAI v3.1 - Economy: age-up food first, then fortify wood/stone
 ; Keeps villager momentum; limits gold/stone over-commit during growth.
 ;==============================================================================
 
@@ -83,6 +83,13 @@
 (or	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-tower-def-active == 1)))
 	(strategic-number sn-wood-gatherer-percentage < eco-fortify-wood-priority)
+	(research-completed ri-feudal-age)
+	(not (and	(current-age == feudal-age)
+		(research-available ri-castle-age)
+		(not(research-completed ri-castle-age))))
+	(not (and	(current-age == castle-age)
+		(research-available ri-imperial-age)
+		(not(research-completed ri-imperial-age))))
 =>
 	(set-strategic-number sn-wood-gatherer-percentage eco-fortify-wood-priority)
 	(set-strategic-number sn-food-gatherer-percentage 42)

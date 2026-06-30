@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v1.5 - Unified mixed blobs + safe-area army staging
+; AdaptiveAI v3.1 - Unified mixed blobs + safe-area army staging
 ; 1) Anti-TSA stream   2) Age-scaled waves   3) Opening/adapt profiles
 ; 4) Siege+escort     5) Defend groups      6) Pre-attack rally
 ;==============================================================================
@@ -41,9 +41,27 @@
 (defrule
 	(military-population >= group-rally-min)
 	(strategic-number sn-percent-attack-soldiers < 100)
+	(up-compare-goal mem-explore-active != 1)
+	(up-compare-goal mem-raid-active != 1)
+	(up-compare-goal mem-raid-route < 1)
 =>
 	(set-strategic-number sn-percent-attack-soldiers 100)
 	(set-strategic-number sn-number-attack-groups 1000))
+
+; Do not drag explore scouts or raiding flanks into main attack blob
+(defrule
+(or	(and	(up-compare-goal mem-explore-active == 1)
+		(up-group-size c: explore-army-group > 0))
+(or	(and	(up-compare-goal mem-raid-active == 1)
+		(up-group-size c: raid-food-group > 0))
+(or	(and	(up-compare-goal mem-raid-active == 1)
+		(up-group-size c: raid-escort-group > 0))
+	(and	(up-compare-goal mem-raid-route >= 1)
+		(up-group-size c: raid-food-group > 0)))))
+	(goal attacking no)
+=>
+	(set-strategic-number sn-percent-attack-soldiers 0)
+	(set-strategic-number sn-number-attack-groups 1))
 
 ; Block Promisory default TSA on open maps once we have army to push
 (defrule

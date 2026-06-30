@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.3 - Army map explore + enemy position monitor for raid intel
-; Scouts/fast units sweep toward enemy; raids wait for enemy/food visibility.
+; AdaptiveAI v3.1 - Scout explore: fight animals, avoid enemy combat
+; Light scouts only; retreat from enemy clusters; no archer/knight explore blobs.
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -16,14 +16,17 @@
 =>
 	(set-goal mem-explore-active 1)
 	(set-goal mem-explore-waypoint 0)
-	(set-strategic-number sn-number-explore-groups 2)
-	(set-strategic-number sn-total-number-explorers 2))
+	(set-goal mem-explore-retreat 0)
+	(set-goal mem-explore-threat-near 0)
+	(set-strategic-number sn-number-explore-groups 1)
+	(set-strategic-number sn-total-number-explorers 1))
 
 (defrule
 	(goal inseln yes)
 	(up-compare-goal mem-explore-active == 1)
 =>
 	(set-goal mem-explore-active 0)
+	(set-goal mem-explore-retreat 0)
 	(up-reset-group c: explore-army-group))
 
 (defrule
@@ -31,28 +34,10 @@
 	(up-compare-goal mem-attack-sustain == 1)
 =>
 	(set-goal mem-explore-active 0)
+	(set-goal mem-explore-retreat 0)
 	(up-reset-group c: explore-army-group))
 
-; ======================== PROMISORY SCOUT REINFORCE ========================
-(defrule
-	(up-compare-goal mem-explore-active == 1)
-	(game-time >= mem-explore-next-send)
-	(up-compare-goal mem-explore-enemy-seen >= 1)
-=>
-	(up-modify-goal mem-explore-next-send g:= game-time)
-	(up-modify-goal mem-explore-next-send c:+ explore-send-cooldown)
-	(up-send-scout group-type-land-explore scout-enemy))
-
-(defrule
-	(up-compare-goal mem-explore-active == 1)
-	(game-time >= mem-explore-next-send)
-	(up-compare-goal mem-explore-enemy-seen < 1)
-=>
-	(up-modify-goal mem-explore-next-send g:= game-time)
-	(up-modify-goal mem-explore-next-send c:+ explore-send-cooldown)
-	(up-send-scout group-type-land-explore scout-corner))
-
-; ======================== BUILD ARMY EXPLORE GROUP ========================
+; ======================== BUILD SCOUT-ONLY EXPLORE GROUP ========================
 (defrule
 	(up-compare-goal mem-explore-active == 1)
 	(up-group-size c: explore-army-group < explore-army-min)
@@ -62,11 +47,11 @@
 	(up-reset-group c: explore-army-group)
 	(up-full-reset-search)
 	(up-find-local c: scout-cavalry-line c: explore-army-max)
-	(up-find-local c: eagle-warrior-line c: explore-army-max)
-	(up-find-local c: archer-line c: 2)
+	(up-find-local c: scout-cavalry c: 1)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-create-group 0 0 c: explore-army-group)
 	(up-modify-group-flag 1 c: explore-army-group))
 
@@ -117,9 +102,87 @@
 =>
 	(set-goal mem-explore-food-seen 1))
 
+; ======================== SCAN ENEMY MILITARY NEAR SCOUTS ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+=>
+	(up-set-group search-local c: explore-army-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point2-x)
+	(up-find-remote c: militiaman-line c: 12)
+	(up-find-remote c: archer-line c: 12)
+	(up-find-remote c: skirmisher-line c: 12)
+	(up-find-remote c: scout-cavalry-line c: 12)
+	(up-find-remote c: knight-line c: 12)
+	(up-find-remote c: cavalry-archer-line c: 12)
+	(up-filter-distance c: -1 c: explore-threat-scan-dist)
+	(up-modify-goal mem-explore-threat-near g:= remote-total))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-threat-near g:>= explore-enemy-retreat-min)
+=>
+	(set-goal mem-explore-retreat 1))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-threat-near < explore-enemy-retreat-min)
+	(up-compare-goal mem-explore-retreat == 1)
+=>
+	(set-goal mem-explore-retreat 0))
+
+; ======================== RETREAT TO TC (AVOID ENEMY COMBAT) ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat == 1)
+	(up-group-size c: explore-army-group > 0)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object temporary-point-x)
+	(up-set-group search-local c: explore-army-group)
+	(up-target-point temporary-point-x action-move -1 stance-no-attack))
+
+; ======================== DEFEND VS GAIA ANIMALS ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
+	(up-group-size c: explore-army-group > 0)
+=>
+	(up-full-reset-search)
+	(up-set-group search-local c: explore-army-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-set-target-point point2-x)
+	(up-find-local c: wolf c: 6)
+	(up-find-local c: wild-boar c: 4)
+	(up-find-local c: jaguar c: 4))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal local-total > 0)
+=>
+	(up-set-group search-local c: explore-army-group)
+	(up-target-objects 0 action-attack -1 stance-defensive))
+
 ; ======================== PLAN EXPLORE WAYPOINTS (ROTATE FLANKS) ========================
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal mem-explore-waypoint == 0)
 =>
@@ -128,6 +191,7 @@
 
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal mem-explore-waypoint == 1)
 =>
@@ -137,6 +201,7 @@
 
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal mem-explore-waypoint == 2)
 =>
@@ -146,6 +211,7 @@
 
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal mem-explore-waypoint >= 3)
 =>
@@ -153,9 +219,10 @@
 	(up-lerp-percent temporary-point-x position-self-x c: 35)
 	(up-cross-tiles temporary-point-x position-self-x c: explore-flank-cross))
 
-; ======================== MOVE EXPLORE ARMY ========================
+; ======================== MOVE EXPLORE SCOUTS (DEFENSIVE — KITE ANIMALS) ========================
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 =>
 	(up-set-group search-local c: explore-army-group)
@@ -167,14 +234,16 @@
 
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal point-distance g:> explore-waypoint-arrive)
 =>
 	(up-set-group search-local c: explore-army-group)
-	(up-target-point temporary-point-x action-move -1 stance-no-attack))
+	(up-target-point temporary-point-x action-move -1 stance-defensive))
 
 (defrule
 	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
 	(up-compare-goal point-distance g:<= explore-waypoint-arrive)
 =>

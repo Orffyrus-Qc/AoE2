@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.4 - Food raids after explore intel; forward TC/tower/castle/walls
-; Raid builders claim sites with TC, tower, castle, stone wall, and stone gate.
+; AdaptiveAI v3.1 - Food raids; forward TC + tower + wall + gate compound
+; Builders: TC → attack tower → wall ring → gate (castle optional). Flank routing.
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -261,11 +261,11 @@
 	(up-filter-distance c: -1 c: raid-path-scan-dist)
 	(up-modify-goal mem-raid-path-enemy g:= remote-total))
 
-; Bigger enemy group on direct path: skip this target and repick
+; Enemy cluster on direct path: skip this target and repick
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal mem-raid-has-target == 1)
-	(up-compare-goal mem-raid-path-enemy g:> raid-max-units)
+	(up-compare-goal mem-raid-path-enemy g:>= raid-enemy-block-min)
 =>
 	(set-goal mem-raid-has-target 0)
 	(set-goal mem-raid-path-enemy 0)
@@ -288,13 +288,14 @@
 	(up-lerp-percent temporary-point-x point4-x c: raid-route-lerp)
 	(up-cross-tiles temporary-point-x position-self-x c: raid-flank-cross))
 
-; Widen flank when direct path has a meaningful enemy cluster
+; Widen flank when a small enemy screen sits on the direct path (still routable)
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal mem-raid-has-target == 1)
 	(up-compare-goal mem-raid-route == 0)
 	(up-group-size c: raid-food-group > 0)
-	(up-compare-goal mem-raid-path-enemy g:>= raid-enemy-block-min)
+	(up-compare-goal mem-raid-path-enemy g:> 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-enemy-block-min)
 =>
 	(up-copy-point temporary-point-x position-self-x)
 	(up-lerp-percent temporary-point-x point4-x c: raid-route-lerp)
@@ -305,7 +306,7 @@
 	(up-compare-goal mem-raid-has-target == 1)
 	(up-compare-goal mem-raid-route == 0)
 	(up-group-size c: raid-food-group > 0)
-	(up-compare-goal mem-raid-path-enemy g:<= raid-max-units)
+	(up-compare-goal mem-raid-path-enemy g:< raid-enemy-block-min)
 =>
 	(set-goal mem-raid-route 1)
 	(set-goal mem-raid-has-target 0)
@@ -383,6 +384,36 @@
 	(up-full-reset-search)
 	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
 	(up-set-target-point point4-x)
+	(up-find-remote c: militiaman-line c: 15)
+	(up-find-remote c: archer-line c: 15)
+	(up-find-remote c: skirmisher-line c: 15)
+	(up-find-remote c: scout-cavalry-line c: 15)
+	(up-find-remote c: knight-line c: 15)
+	(up-filter-distance c: -1 c: 10)
+	(up-modify-goal mem-raid-path-enemy g:= remote-total))
+
+(defrule
+	(up-compare-goal mem-raid-route == 2)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:<= raid-waypoint-arrive)
+	(up-compare-goal mem-raid-path-enemy g:>= raid-enemy-block-min)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-point position-self-x action-move -1 stance-no-attack)
+	(set-goal mem-raid-route 0)
+	(set-goal mem-raid-pick 1)
+	(set-goal mem-raid-retarget 1)
+	(set-goal mem-raid-path-enemy 0))
+
+(defrule
+	(up-compare-goal mem-raid-route == 2)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal point-distance g:<= raid-waypoint-arrive)
+	(up-compare-goal mem-raid-path-enemy g:< raid-enemy-block-min)
+=>
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point4-x)
 	(up-find-remote c: villager-class c: 5)
 	(up-find-remote c: farm-class c: 5)
 	(up-find-remote c: mill c: 3)
@@ -417,7 +448,7 @@
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-route >= 1)
 	(up-group-size c: raid-food-group > 0)
-	(up-compare-goal mem-raid-path-enemy g:> raid-max-units)
+	(up-compare-goal mem-raid-path-enemy g:>= raid-enemy-block-min)
 =>
 	(up-set-group search-local c: raid-food-group)
 	(up-target-point position-self-x action-move -1 stance-no-attack)
@@ -446,8 +477,10 @@
 	(up-pending-objects c: watch-tower < 1)
 	(up-pending-objects c: castle < 1)
 	(up-pending-objects c: town-center < 1)
-	(up-pending-objects c: stone-wall < 2)
-	(up-pending-objects c: stone-gate1 < 1)
+(or	(up-pending-objects c: stone-wall < 2)
+	(up-pending-objects c: palisade-wall < 2))
+(or	(up-pending-objects c: stone-gate1 < 1)
+	(up-pending-objects c: palisade-gate-foundation1 < 1))
 =>
 	(up-copy-point point3-x position-self-x)
 	(up-lerp-percent point3-x saved-point-x c: 55)
@@ -460,7 +493,7 @@
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-tc)
-	(current-age >= castle-age)
+	(current-age >= feudal-age)
 	(up-compare-goal mem-stronghold-tc-count g:< raid-forward-tc-max)
 	(up-pending-objects c: town-center < 1)
 	(wood-amount >= raid-tc-wood-min)
@@ -477,31 +510,9 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-tc)
 =>
-	(set-goal mem-raid-build-step raid-build-step-castle))
-
-; ======================== FORWARD CASTLE ========================
-(defrule
-	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
-	(current-age >= castle-age)
-	(stone-amount >= raid-castle-stone-min)
-	(can-build castle)
-	(up-pending-objects c: castle < 1)
-	(up-can-build-line 0 saved-point-x c: castle)
-=>
-	(set-strategic-number sn-ignore-tower-elevation 1)
-	(up-build-line saved-point-x saved-point-x c: castle)
-	(up-assign-builders c: castle g: mem-build-struct-vills)
-	(set-goal mem-raid-stuck 0))
-
-(defrule
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
-=>
 	(set-goal mem-raid-build-step raid-build-step-tower))
 
-; ======================== FORWARD TOWER (WATCH / GUARD) ========================
+; ======================== FORWARD TOWER (ATTACK / GUARD) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -522,7 +533,21 @@
 =>
 	(set-goal mem-raid-build-step raid-build-step-wall))
 
-; ======================== STONE GATE (over existing wall) ========================
+; ======================== GATE (over existing wall) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= feudal-age)
+	(current-age < castle-age)
+	(wood-amount >= wall-segment-wood)
+	(not (up-point-contains saved-point-x c: wall-class))
+	(up-can-build-line 0 saved-point-x c: palisade-wall)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
+
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -534,6 +559,22 @@
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-wall)
 	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= feudal-age)
+	(current-age < castle-age)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-gate-foundation1 < 1)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 g: mem-build-gate-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule
@@ -600,9 +641,31 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
 =>
+	(set-goal mem-raid-build-step raid-build-step-castle))
+
+; ======================== OPTIONAL FORWARD CASTLE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
+	(current-age >= castle-age)
+	(stone-amount >= raid-castle-stone-min)
+	(can-build castle)
+	(up-pending-objects c: castle < 1)
+	(up-can-build-line 0 saved-point-x c: castle)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: castle)
+	(up-assign-builders c: castle g: mem-build-struct-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
+=>
 	(set-goal mem-raid-build-step raid-build-step-done))
 
-; ======================== STONE WALL SEGMENT ========================
+; ======================== WALL SEGMENT (CLOSE COMPOUND) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -610,6 +673,20 @@
 =>
 	(up-copy-point point3-x saved-point-x)
 	(up-lerp-tiles point3-x enemy-x c: 4))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(current-age >= feudal-age)
+	(current-age < castle-age)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < 2)
+	(up-can-build-line saved-point-x point3-x c: palisade-wall)
+=>
+	(up-build-line saved-point-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
 
 (defrule
 	(up-compare-goal mem-raid-active == 1)
