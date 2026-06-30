@@ -1,0 +1,186 @@
+;==============================================================================
+; AdaptiveAI v2.3 - Army map explore + enemy position monitor for raid intel
+; Scouts/fast units sweep toward enemy; raids wait for enemy/food visibility.
+;==============================================================================
+
+; ======================== ARM / DISARM ========================
+(defrule
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-attack-recover != 1)
+(or	(up-compare-goal mem-attack-lock == 1)
+(or	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-explore-enemy-seen < 1)))
+	(up-compare-goal mem-explore-active != 1)
+=>
+	(set-goal mem-explore-active 1)
+	(set-goal mem-explore-waypoint 0)
+	(set-strategic-number sn-number-explore-groups 2)
+	(set-strategic-number sn-total-number-explorers 2))
+
+(defrule
+	(goal inseln yes)
+	(up-compare-goal mem-explore-active == 1)
+=>
+	(set-goal mem-explore-active 0)
+	(up-reset-group c: explore-army-group))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-attack-sustain == 1)
+=>
+	(set-goal mem-explore-active 0)
+	(up-reset-group c: explore-army-group))
+
+; ======================== PROMISORY SCOUT REINFORCE ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(game-time >= mem-explore-next-send)
+	(up-compare-goal mem-explore-enemy-seen >= 1)
+=>
+	(up-modify-goal mem-explore-next-send g:= game-time)
+	(up-modify-goal mem-explore-next-send c:+ explore-send-cooldown)
+	(up-send-scout group-type-land-explore scout-enemy))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(game-time >= mem-explore-next-send)
+	(up-compare-goal mem-explore-enemy-seen < 1)
+=>
+	(up-modify-goal mem-explore-next-send g:= game-time)
+	(up-modify-goal mem-explore-next-send c:+ explore-send-cooldown)
+	(up-send-scout group-type-land-explore scout-corner))
+
+; ======================== BUILD ARMY EXPLORE GROUP ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group < explore-army-min)
+	(military-population >= explore-army-min)
+=>
+	(up-modify-group-flag 0 c: explore-army-group)
+	(up-reset-group c: explore-army-group)
+	(up-full-reset-search)
+	(up-find-local c: scout-cavalry-line c: explore-army-max)
+	(up-find-local c: eagle-warrior-line c: explore-army-max)
+	(up-find-local c: archer-line c: 2)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-create-group 0 0 c: explore-army-group)
+	(up-modify-group-flag 1 c: explore-army-group))
+
+; ======================== MONITOR ENEMY TC / CASTLE ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(game-time >= mem-explore-next-scan)
+=>
+	(up-modify-goal mem-explore-next-scan g:= game-time)
+	(up-modify-goal mem-explore-next-scan c:+ explore-scan-cooldown)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-find-remote c: town-center c: 2)
+	(up-find-remote c: castle c: 2))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal remote-total > 0)
+	(up-set-target-object search-remote c: 0)
+=>
+	(up-get-point position-object point4-x)
+	(set-goal mem-explore-enemy-seen 1))
+
+(defrule
+	(players-building-count target-player >= 1)
+	(up-compare-goal mem-explore-enemy-seen < 1)
+=>
+	(set-goal mem-explore-enemy-seen 1))
+
+; ======================== MONITOR ENEMY FOOD (MILLS / FARMS) ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal mem-explore-food-seen < 1)
+	(game-time >= mem-explore-next-scan)
+=>
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point enemy-x)
+	(up-find-remote c: mill c: 12)
+	(up-find-remote c: farm-class c: 20)
+	(up-find-remote c: livestock-class c: 8)
+	(up-filter-distance c: -1 c: explore-food-radius))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-compare-goal remote-total > 0)
+	(up-compare-goal mem-explore-food-seen < 1)
+=>
+	(set-goal mem-explore-food-seen 1))
+
+; ======================== PLAN EXPLORE WAYPOINTS (ROTATE FLANKS) ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-waypoint == 0)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: explore-enemy-lerp))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-waypoint == 1)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: explore-enemy-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: explore-flank-cross))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-waypoint == 2)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: explore-enemy-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: explore-flank-wide))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal mem-explore-waypoint >= 3)
+=>
+	(up-copy-point temporary-point-x enemy-x)
+	(up-lerp-percent temporary-point-x position-self-x c: 35)
+	(up-cross-tiles temporary-point-x position-self-x c: explore-flank-cross))
+
+; ======================== MOVE EXPLORE ARMY ========================
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+=>
+	(up-set-group search-local c: explore-army-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-get-point-distance point2-x temporary-point-x point-distance))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal point-distance g:> explore-waypoint-arrive)
+=>
+	(up-set-group search-local c: explore-army-group)
+	(up-target-point temporary-point-x action-move -1 stance-no-attack))
+
+(defrule
+	(up-compare-goal mem-explore-active == 1)
+	(up-group-size c: explore-army-group > 0)
+	(up-compare-goal point-distance g:<= explore-waypoint-arrive)
+=>
+	(up-modify-goal mem-explore-waypoint c:+ 1))
+
+(defrule
+	(up-compare-goal mem-explore-waypoint >= 4)
+=>
+	(set-goal mem-explore-waypoint 0))

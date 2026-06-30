@@ -74,6 +74,12 @@
 (defconst mem-stronghold-castle-done 1955)
 (defconst mem-stronghold-tc-count 1956)
 (defconst mem-stronghold-castle-count 1957)
+(defconst mem-explore-active 1958)
+(defconst mem-explore-enemy-seen 1959)
+(defconst mem-explore-food-seen 1960)
+(defconst mem-explore-waypoint 1961)
+(defconst mem-explore-next-send 1962)
+(defconst mem-explore-next-scan 1963)
 
 ; --- Adaptation modes (values stored in mem-adapt-mode) ---
 (defconst adapt-balanced 0)
@@ -193,6 +199,19 @@
 (defconst raid-flank-cross 16)
 (defconst raid-flank-cross-wide 26)
 (defconst raid-waypoint-arrive 8)
+
+; --- Army map explore + enemy monitor (feeds raid targeting) ---
+(defconst explore-army-group 17)
+(defconst explore-army-min 2)
+(defconst explore-army-max 4)
+(defconst explore-send-cooldown 35)
+(defconst explore-scan-cooldown 12)
+(defconst explore-waypoint-arrive 10)
+(defconst explore-enemy-lerp 58)
+(defconst explore-flank-cross 20)
+(defconst explore-flank-wide 32)
+(defconst explore-food-radius 30)
+(defconst explore-fallback-time 480)
 
 ; --- Population-scaled group sizes (attack + defend grow with army) ---
 (defconst group-scale-mpop-feudal 10)

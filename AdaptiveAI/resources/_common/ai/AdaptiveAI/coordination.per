@@ -1,7 +1,27 @@
 ;==============================================================================
-; AdaptiveAI v2.1 - Cross-module coordination (loads last; harmonizes tactics)
-; Resolves conflicts between fortify, preattack, raid, response, and military.
+; AdaptiveAI v2.3 - Cross-module coordination (loads last; harmonizes tactics)
+; Resolves conflicts between explore, fortify, preattack, raid, and military.
 ;==============================================================================
+
+; ======================== EXPLORE BEFORE RAID DISPATCH ========================
+(defrule
+	(up-compare-goal mem-raid-active != 1)
+	(up-compare-goal mem-explore-enemy-seen < 1)
+	(current-age >= feudal-age)
+	(goal inseln no)
+	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-explore-active != 1)
+=>
+	(set-goal mem-explore-active 1))
+
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal mem-explore-food-seen < 1)
+	(up-compare-goal mem-explore-enemy-seen < 1)
+	(game-time < explore-fallback-time)
+=>
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-explore-active 1))
 
 ; ======================== RAID OFF DURING MAIN PUSH ========================
 (defrule

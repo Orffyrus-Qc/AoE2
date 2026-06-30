@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.1 - Food raids in prep only; flank routes; forward towers with escort
-; Main raiders detour around bigger enemy groups; builders + escort claim map control
+; AdaptiveAI v2.3 - Food raids after explore intel; flank routes; forward towers
+; Requires enemy/food visibility from explore.per before dispatching raids.
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -14,6 +14,8 @@
 	(up-compare-goal mem-attack-lock == 1)
 	(up-compare-goal mem-attack-sustain != 1)
 	(up-compare-goal mem-attack-recover != 1)
+(or	(up-compare-goal mem-explore-enemy-seen >= 1)
+	(game-time >= explore-fallback-time))
 =>
 	(set-goal mem-raid-active 1)
 	(set-goal mem-raid-pick 1)
@@ -70,6 +72,7 @@
 	(up-find-local c: knight-line c: raid-escort-max)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-escort-group)
 	(up-modify-group-flag 1 c: raid-escort-group))
 
@@ -105,6 +108,7 @@
 	(up-find-local c: knight-line c: raid-max-units)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-food-group)
 	(up-modify-group-flag 1 c: raid-food-group))
 
@@ -133,14 +137,26 @@
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-pick == 1)
+(or	(up-compare-goal mem-explore-enemy-seen >= 1)
+	(game-time >= explore-fallback-time))
 =>
 	(up-full-reset-search)
 	(up-modify-goal temporary-goal7 s:= sn-focus-player-number)
 	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point enemy-x)
 	(up-find-remote c: villager-class c: 40)
 	(up-find-remote c: farm-class c: 40)
 	(up-find-remote c: mill c: 20)
-	(up-find-remote c: livestock-class c: 10))
+	(up-find-remote c: livestock-class c: 10)
+	(up-filter-distance c: -1 c: explore-food-radius))
+
+; Prefer closest food to monitored enemy position
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal remote-total > 0)
+=>
+	(up-set-target-point enemy-x)
+	(up-clean-search search-remote object-data-distance search-order-asc))
 
 ; Drop targets inside enemy TC range
 (defrule
