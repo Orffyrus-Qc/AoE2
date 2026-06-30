@@ -52,6 +52,10 @@
 (defconst mem-attack-sustain 1933)
 (defconst mem-attack-peak 1934)
 (defconst mem-attack-floor 1935)
+(defconst mem-raid-active 1936)
+(defconst mem-raid-pick 1937)
+(defconst mem-raid-retarget 1938)
+(defconst mem-raid-next-pick 1939)
 
 ; --- Adaptation modes (values stored in mem-adapt-mode) ---
 (defconst adapt-balanced 0)
@@ -143,6 +147,14 @@
 (defconst preattack-towers-min 4)
 (defconst preattack-fortify-vills 14)
 (defconst preattack-loss-half 2)
+
+; --- Food raids (avoid TC/castle/tower range; retarget when pressured) ---
+(defconst raid-food-group 16)
+(defconst raid-min-force 6)
+(defconst raid-max-units 10)
+(defconst raid-safe-min-dist 16)
+(defconst raid-tower-safe-dist 11)
+(defconst raid-pick-cooldown 25)
 
 ; --- Population-scaled group sizes (attack + defend grow with army) ---
 (defconst group-scale-mpop-feudal 10)

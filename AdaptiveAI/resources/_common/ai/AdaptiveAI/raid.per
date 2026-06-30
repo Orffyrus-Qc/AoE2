@@ -1,0 +1,145 @@
+;==============================================================================
+; AdaptiveAI v1.7 - Food raids: mills/farms/vills, avoid TC/castle/tower range
+; When pressured, retarget other food workers/buildings instead of fighting base
+;==============================================================================
+
+; ======================== ARM / DISARM ========================
+(defrule
+	(up-compare-goal mem-raid-active != 1)
+	(current-age >= feudal-age)
+	(goal inseln no)
+	(players-building-count target-player >= 1)
+	(up-compare-goal my-mpop g:>= raid-min-force)
+(or	(up-compare-goal mem-attack-lock == 1)
+	(up-compare-goal mem-attack-sustain == 1))
+=>
+	(set-goal mem-raid-active 1)
+	(set-goal mem-raid-pick 1)
+	(up-modify-goal mem-raid-next-pick g:= game-time)
+	(up-modify-goal mem-raid-next-pick c:+ raid-pick-cooldown))
+
+(defrule
+	(goal inseln yes)
+	(up-compare-goal mem-raid-active == 1)
+=>
+	(set-goal mem-raid-active 0)
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-raid-retarget 0)
+	(up-reset-group c: raid-food-group))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal my-mpop g:< raid-min-force)
+=>
+	(set-goal mem-raid-active 0)
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-raid-retarget 0)
+	(up-reset-group c: raid-food-group))
+
+; ======================== BUILD RAID GROUP (FAST UNITS) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-food-group < raid-min-force)
+	(up-compare-goal my-mpop g:>= raid-min-force)
+=>
+	(up-modify-group-flag 0 c: raid-food-group)
+	(up-reset-group c: raid-food-group)
+	(up-full-reset-search)
+	(up-filter-exclude -1 actionid-explore orderid-explore -1)
+	(up-find-local c: scout-cavalry-line c: raid-max-units)
+	(up-find-local c: archer-line c: raid-max-units)
+	(up-find-local c: skirmisher-line c: raid-max-units)
+	(up-find-local c: cavalry-archer-line c: raid-max-units)
+	(up-find-local c: knight-line c: raid-max-units)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-create-group 0 0 c: raid-food-group)
+	(up-modify-group-flag 1 c: raid-food-group))
+
+; ======================== RETARGET WHEN PRESSURED ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-food-group > 0)
+	(up-compare-goal mem-raid-pick != 1)
+(or	(goal underattack yes)
+	(up-enemy-units-in-town >= 2))
+=>
+	(set-goal mem-raid-pick 1)
+	(set-goal mem-raid-retarget 1))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-pick != 1)
+	(up-group-size c: raid-food-group > 0)
+	(game-time >= mem-raid-next-pick)
+=>
+	(up-modify-goal mem-raid-next-pick g:= game-time)
+	(up-modify-goal mem-raid-next-pick c:+ raid-pick-cooldown)
+	(set-goal mem-raid-pick 1))
+
+; ======================== PICK SAFE FOOD TARGETS ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-pick == 1)
+=>
+	(up-full-reset-search)
+	(up-modify-goal temporary-goal7 s:= sn-focus-player-number)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-find-remote c: villager-class c: 40)
+	(up-find-remote c: farm-class c: 40)
+	(up-find-remote c: mill c: 20)
+	(up-find-remote c: livestock-class c: 10))
+
+; Drop targets inside enemy TC range
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-find-remote c: town-center c: 1)
+=>
+	(up-set-target-object search-remote c: 0)
+	(up-get-point position-object point-x)
+	(up-set-target-point point-x)
+	(up-filter-distance c: raid-safe-min-dist c: -1))
+
+; Drop targets inside enemy castle range
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-find-remote c: castle c: 1)
+=>
+	(up-set-target-object search-remote c: 0)
+	(up-get-point position-object point-x)
+	(up-set-target-point point-x)
+	(up-filter-distance c: raid-safe-min-dist c: -1))
+
+; Drop targets inside tower range (first tower anchor)
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-find-remote c: tower-class c: 8)
+=>
+	(up-set-target-object search-remote c: 0)
+	(up-get-point position-object point-x)
+	(up-set-target-point point-x)
+	(up-filter-distance c: raid-tower-safe-dist c: -1))
+
+; ======================== ATTACK FOOD TARGET ========================
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal remote-total > 0)
+	(up-group-size c: raid-food-group > 0)
+	(up-set-target-object search-remote c: 0)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-objects 0 action-default -1 stance-aggressive)
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-raid-retarget 0)
+	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
+
+; No safe food left: hold near self and retry later
+(defrule
+	(up-compare-goal mem-raid-pick == 1)
+	(up-compare-goal remote-total <= 0)
+	(up-group-size c: raid-food-group > 0)
+=>
+	(up-set-group search-local c: raid-food-group)
+	(up-target-point position-self-x action-move -1 stance-no-attack)
+	(set-goal mem-raid-pick 0)
+	(set-goal mem-raid-retarget 0)
+	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
