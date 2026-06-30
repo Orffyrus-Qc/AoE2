@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v2.8 - TC palisade box (full surround) + choke walls with gate-first placement
+; AdaptiveAI v2.9 - TC palisade box + choke walls (fortify priority)
 ; Site 0: four sides then gate on first east segment. Sites 1-2: gate then flank walls.
 ;==============================================================================
 
@@ -33,6 +33,21 @@
 
 ; ======================== ARM WALLING ========================
 ; Pre-attack prep: walls before first offensive (priority over reactive triggers)
+(defrule
+	(up-compare-goal mem-fortify-ready != 1)
+	(up-compare-goal mem-attack-sustain != 1)
+	(up-compare-goal mem-wall-active != 1)
+	(up-compare-goal mem-wall-phase != wall-phase-done)
+	(goal inseln no)
+	(current-age >= feudal-age)
+	(game-time < wall-time-max)
+	(building-type-count town-center >= 1)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
+	(wood-amount >= wall-segment-wood)
+=>
+	(set-goal mem-wall-active 1)
+	(set-goal mem-tower-def-active 1))
+
 (defrule
 	(up-compare-goal mem-fortify-ready != 1)
 	(up-compare-goal mem-attack-sustain != 1)

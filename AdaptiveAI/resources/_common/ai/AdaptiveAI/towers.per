@@ -17,16 +17,19 @@
 	(set-goal mem-tower-def-active 0)
 	(set-goal mem-tower-off-active 0))
 
-; ======================== ARM DEFENSIVE ========================
+; ======================== ARM DEFENSIVE (PRIORITY: PARALLEL WITH WALLS) ========================
 (defrule
 	(up-compare-goal mem-fortify-ready != 1)
 	(up-compare-goal mem-attack-sustain != 1)
 	(up-compare-goal mem-tower-def-active != 1)
 	(goal inseln no)
 	(game-time < tower-time-max)
-	(up-compare-goal mem-wall-active == 1)
 	(current-age >= feudal-age)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= tower-wood-min)
+(or	(up-compare-goal mem-wall-active == 1)
+(or	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-attack-lock == 1)))
 =>
 	(set-goal mem-tower-def-active 1)
 	(set-goal mem-tower-def-slot 0)
@@ -36,9 +39,11 @@
 	(up-compare-goal mem-tower-def-active != 1)
 	(goal inseln no)
 	(game-time < tower-time-max)
-	(up-compare-goal mem-wall-active == 1)
 	(current-age >= feudal-age)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= tower-wood-min)
+(or	(up-compare-goal mem-wall-active == 1)
+	(up-compare-goal mem-stronghold-active == 1))
 =>
 	(set-goal mem-tower-def-active 1)
 	(set-goal mem-tower-def-slot 0)

@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v2.0 - Progressive fortification + surplus wood/stone wall waves
+; AdaptiveAI v2.9 - Progressive fortification (priority over boom/raid)
 ; Extends defense + towers with more sites, stone tiers, and repeating waves.
 ;==============================================================================
 
@@ -25,9 +25,8 @@
 	(current-age >= feudal-age)
 	(game-time >= eco-fortify-time-min)
 	(game-time < wall-time-max)
-	(up-compare-goal villagercount >= eco-boom-vills-feudal)
-	(food-amount >= eco-boom-food-min)
-	(wood-amount >= wall-start-wood)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
+	(wood-amount >= wall-segment-wood)
 	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
 (or	(goal underattack yes)
@@ -47,8 +46,7 @@
 	(current-age >= feudal-age)
 	(game-time >= eco-fortify-time-min)
 	(game-time < tower-time-max)
-	(up-compare-goal villagercount >= eco-boom-vills-feudal)
-	(food-amount >= eco-boom-food-min)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= tower-wood-min)
 	(building-type-count-total tower-class < tower-def-built-max)
 	(up-compare-goal mem-tower-def-active != 1)
@@ -84,8 +82,7 @@
 	(game-time < wall-time-max)
 	(up-compare-goal mem-wall-phase == wall-phase-done)
 	(up-compare-goal mem-wall-active != 1)
-	(up-compare-goal villagercount >= eco-boom-vills-feudal)
-	(food-amount >= eco-boom-food-min)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= fort-wood-surplus)
 	(up-compare-goal mem-build-gate-now g:< mem-build-gate-cap)
 	(up-compare-goal mem-build-wall-now g:< mem-build-wall-cap)

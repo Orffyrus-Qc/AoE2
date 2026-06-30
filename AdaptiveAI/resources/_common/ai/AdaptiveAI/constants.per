@@ -185,7 +185,7 @@
 (defconst group-rally-big-castle 28)
 
 ; --- Pre-attack governor (fortify first, max-pop commit, half-loss retreat) ---
-(defconst preattack-towers-min 4)
+(defconst preattack-towers-min 5)
 (defconst preattack-towers-fallback 2)
 (defconst preattack-fortify-vills 14)
 (defconst preattack-loss-half 2)
@@ -302,7 +302,7 @@
 (defconst wall-choke-half-neg -4)
 (defconst wall-choke-cross 5)
 (defconst wall-segment-wood 20)
-(defconst wall-start-wood 40)
+(defconst wall-start-wood 25)
 (defconst wall-pending-max 6)
 (defconst wall-complete-palisade 26)
 (defconst wall-gate-target 5)
@@ -310,7 +310,7 @@
 (defconst wall-gate-retry-max 8)
 (defconst wall-trigger-aggression 2)
 (defconst wall-trigger-raids 1)
-(defconst wall-proactive-time 420)
+(defconst wall-proactive-time 300)
 (defconst wall-time-max 3600)
 (defconst fort-wave-max 6)
 (defconst fort-gate-cap 18)
@@ -320,7 +320,7 @@
 (defconst fort-stone-min 120)
 (defconst fort-site-step 4)
 (defconst fort-wave-forward 3)
-(defconst fort-wood-surplus 360)
+(defconst fort-wood-surplus 200)
 (defconst fort-stone-surplus 480)
 
 ; --- Stronghold compounds (every TC/castle: multi-gate wall + repair/rebuild) ---
@@ -348,14 +348,14 @@
 
 ; --- Dedicated build/repair corps (scales over time) ---
 (defconst build-workers-group 19)
-(defconst build-pool-feudal 6)
-(defconst build-pool-castle 10)
+(defconst build-pool-feudal 8)
+(defconst build-pool-castle 12)
 (defconst build-pool-imp 16)
 (defconst build-pool-max 24)
 (defconst build-ramp-interval 360)
-(defconst build-wall-vills-max 10)
-(defconst build-gate-vills-max 8)
-(defconst build-tower-vills-max 8)
+(defconst build-wall-vills-max 12)
+(defconst build-gate-vills-max 10)
+(defconst build-tower-vills-max 10)
 (defconst build-struct-vills-max 8)
 (defconst build-repair-vills-max 12)
 (defconst build-raid-vills-max 8)
@@ -378,7 +378,7 @@
 (defconst tower-off-cross 4)
 (defconst tower-off-min-dist 22)
 (defconst tower-off-max-dist 55)
-(defconst tower-wood-min 80)
+(defconst tower-wood-min 50)
 (defconst tower-stone-min 175)
 (defconst tower-pending-max 2)
 (defconst tower-stuck-max 8)
@@ -392,9 +392,11 @@
 (defconst fort-tower-off-per-wave 1)
 
 ; --- Economy guards (protect feudal/castle boom from fortify drain) ---
+(defconst eco-fortify-vills-min 14)
+(defconst eco-fortify-wood-priority 48)
 (defconst eco-boom-vills-feudal 22)
 (defconst eco-boom-vills-castle 30)
 (defconst eco-boom-food-min 450)
 (defconst eco-boom-wood-min 200)
-(defconst eco-fortify-time-min 480)
+(defconst eco-fortify-time-min 240)
 (defconst eco-stone-vills-max 4)

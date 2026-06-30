@@ -1,5 +1,5 @@
 ;==============================================================================
-; AdaptiveAI v2.5 - Dedicated build/repair corps; worker counts rise over time
+; AdaptiveAI v2.9 - Build corps prioritizes walls, gates, and towers
 ; Exclusive villagers for walls, gates, towers, TCs, castles, maintain/rebuild.
 ;==============================================================================
 
@@ -136,15 +136,51 @@
 ; Minimums so fortify/stronghold always get help
 (defrule
 	(current-age >= feudal-age)
-	(up-compare-goal mem-build-wall-vills < 2)
+	(up-compare-goal mem-build-wall-vills < 3)
 =>
-	(set-goal mem-build-wall-vills 2))
+	(set-goal mem-build-wall-vills 3))
 
 (defrule
 	(current-age >= feudal-age)
-	(up-compare-goal mem-build-gate-vills < 2)
+	(up-compare-goal mem-build-gate-vills < 3)
 =>
-	(set-goal mem-build-gate-vills 2))
+	(set-goal mem-build-gate-vills 3))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-build-tower-vills < 3)
+=>
+	(set-goal mem-build-tower-vills 3))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-fortify-ready != 1)
+(or	(up-compare-goal mem-wall-active == 1)
+(or	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-tower-def-active == 1)))
+	(up-compare-goal mem-build-wall-vills g:< build-wall-vills-max)
+=>
+	(up-modify-goal mem-build-wall-vills c:+ 2))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-fortify-ready != 1)
+(or	(up-compare-goal mem-wall-active == 1)
+(or	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-tower-def-active == 1)))
+	(up-compare-goal mem-build-gate-vills g:< build-gate-vills-max)
+=>
+	(up-modify-goal mem-build-gate-vills c:+ 2))
+
+(defrule
+	(current-age >= feudal-age)
+	(up-compare-goal mem-fortify-ready != 1)
+(or	(up-compare-goal mem-wall-active == 1)
+(or	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-tower-def-active == 1)))
+	(up-compare-goal mem-build-tower-vills g:< build-tower-vills-max)
+=>
+	(up-modify-goal mem-build-tower-vills c:+ 2))
 
 (defrule
 	(current-age >= feudal-age)
@@ -162,7 +198,7 @@
 (defrule
 	(current-age >= feudal-age)
 	(up-group-size c: build-workers-group < mem-build-pool-size)
-	(up-compare-goal villagercount >= eco-boom-vills-feudal)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 =>
 	(up-modify-group-flag 0 c: build-workers-group)
 	(up-reset-group c: build-workers-group)
@@ -384,9 +420,10 @@
 	(goal inseln no)
 	(current-age >= feudal-age)
 	(game-time < tower-time-max)
-	(up-compare-goal mem-build-pool-size >= build-pool-castle)
+	(up-compare-goal mem-build-pool-size >= build-pool-feudal)
 	(building-type-count-total tower-class < fort-tower-cap)
 	(up-compare-goal mem-tower-def-active != 1)
+	(up-compare-goal villagercount >= eco-fortify-vills-min)
 	(wood-amount >= tower-wood-min)
 =>
 	(set-goal mem-tower-def-active 1)
