@@ -34,6 +34,7 @@
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal mem-explore-food-seen < 1)
 	(up-compare-goal mem-explore-enemy-seen < 1)
+	(up-compare-goal mem-raid-has-site != 1)
 	(game-time < explore-fallback-time)
 =>
 	(set-goal mem-raid-pick 0)
@@ -53,6 +54,7 @@
 	(set-goal mem-raid-route 0)
 	(set-goal mem-raid-has-target 0)
 	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-patrol-group)
 	(up-reset-group c: raid-escort-group)
 	(up-reset-group c: raid-builder-group))
 

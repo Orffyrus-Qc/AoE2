@@ -1,6 +1,7 @@
 ;==============================================================================
-; AdaptiveAI v3.1 - Food raids; forward TC + tower + wall + gate compound
-; Builders: TC → attack tower → wall ring → gate (castle optional). Flank routing.
+; AdaptiveAI v3.3 - Forward raid near enemy city; flank routing; split army
+; Builders+escort: TC→tower→castle→wall→gate, repair/rebuild, defend site.
+; Strike half: eco raids (no projectile buildings). Patrol half: scout, skirmish.
 ;==============================================================================
 
 ; ======================== ARM / DISARM ========================
@@ -37,6 +38,7 @@
 	(set-goal mem-raid-path-enemy 0)
 	(set-goal mem-raid-has-target 0)
 	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-patrol-group)
 	(up-reset-group c: raid-escort-group)
 	(up-reset-group c: raid-builder-group))
 
@@ -55,8 +57,25 @@
 	(set-goal mem-raid-path-enemy 0)
 	(set-goal mem-raid-has-target 0)
 	(up-reset-group c: raid-food-group)
+	(up-reset-group c: raid-patrol-group)
 	(up-reset-group c: raid-escort-group)
 	(up-reset-group c: raid-builder-group))
+
+; ======================== ANCHOR FORWARD SITE NEAR ENEMY CITY ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site != 1)
+(or	(up-compare-goal mem-explore-enemy-seen >= 1)
+	(game-time >= explore-fallback-time))
+=>
+	(up-copy-point point4-x enemy-x)
+	(up-copy-point saved-point-x position-self-x)
+	(up-lerp-percent saved-point-x point4-x c: raid-enemy-city-lerp)
+	(up-lerp-tiles saved-point-x position-self-x c: raid-site-offset)
+	(set-goal mem-raid-build 1)
+	(set-goal mem-raid-build-step raid-build-step-tc)
+	(set-goal mem-raid-has-site 1)
+	(set-goal mem-raid-stuck 0))
 
 ; ======================== BUILD ESCORT GROUP (SMALL GUARD) ========================
 (defrule
@@ -73,13 +92,14 @@
 	(up-find-local c: skirmisher-line c: raid-escort-max)
 	(up-find-local c: knight-line c: raid-escort-max)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-escort-group)
 	(up-modify-group-flag 1 c: raid-escort-group))
 
-; ======================== BUILD BUILDER VILLAGERS (SCALES WITH BUILDERS.PER) ========================
+; ======================== BUILD BUILDER VILLAGERS ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-group-size c: raid-builder-group < 8)
@@ -91,6 +111,7 @@
 	(up-full-reset-search)
 	(up-find-local c: villager g: mem-build-raid-vills)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
@@ -109,6 +130,7 @@
 	(up-full-reset-search)
 	(up-find-local c: villager g: mem-build-raid-vills)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
@@ -126,13 +148,14 @@
 	(up-full-reset-search)
 	(up-find-local c: villager g: mem-build-raid-vills)
 	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-builder-group)
 	(up-modify-group-flag 1 c: raid-builder-group))
 
-; ======================== BUILD MAIN FOOD RAID GROUP ========================
+; ======================== BUILD STRIKE GROUP (ECO RAIDS) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-group-size c: raid-food-group < raid-min-force)
@@ -147,12 +170,37 @@
 	(up-find-local c: skirmisher-line c: raid-max-units)
 	(up-find-local c: cavalry-archer-line c: raid-max-units)
 	(up-find-local c: knight-line c: raid-max-units)
+	(up-remove-objects search-local object-data-group-flag c:== raid-patrol-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
 	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
 	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
 	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
 	(up-create-group 0 0 c: raid-food-group)
 	(up-modify-group-flag 1 c: raid-food-group))
+
+; ======================== BUILD PATROL GROUP (MONITOR + SKIRMISH) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min)
+	(up-compare-goal my-mpop g:>= raid-min-total)
+=>
+	(up-modify-group-flag 0 c: raid-patrol-group)
+	(up-reset-group c: raid-patrol-group)
+	(up-full-reset-search)
+	(up-filter-exclude -1 actionid-explore orderid-explore -1)
+	(up-find-local c: scout-cavalry-line c: raid-patrol-max)
+	(up-find-local c: archer-line c: raid-patrol-max)
+	(up-find-local c: skirmisher-line c: raid-patrol-max)
+	(up-find-local c: cavalry-archer-line c: raid-patrol-max)
+	(up-find-local c: knight-line c: raid-patrol-max)
+	(up-find-local c: spearman-line c: raid-patrol-max)
+	(up-remove-objects search-local object-data-group-flag c:== raid-food-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-escort-group)
+	(up-remove-objects search-local object-data-group-flag c:== raid-builder-group)
+	(up-remove-objects search-local object-data-group-flag c:== build-workers-group)
+	(up-remove-objects search-local object-data-group-flag c:== explore-army-group)
+	(up-create-group 0 0 c: raid-patrol-group)
+	(up-modify-group-flag 1 c: raid-patrol-group))
 
 ; ======================== RETARGET WHEN PRESSURED ========================
 (defrule
@@ -175,7 +223,7 @@
 	(up-modify-goal mem-raid-next-pick c:+ raid-pick-cooldown)
 	(set-goal mem-raid-pick 1))
 
-; ======================== PICK SAFE FOOD TARGETS ========================
+; ======================== PICK SAFE ECO TARGETS (NO PROJECTILE BUILDINGS) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-pick == 1)
@@ -189,10 +237,18 @@
 	(up-find-remote c: villager-class c: 40)
 	(up-find-remote c: farm-class c: 40)
 	(up-find-remote c: mill c: 20)
+	(up-find-remote c: market c: 12)
+	(up-find-remote c: lumber-camp c: 10)
+	(up-find-remote c: mining-camp c: 10)
+	(up-find-remote c: barracks c: 8)
+	(up-find-remote c: stable c: 6)
+	(up-find-remote c: archery-range c: 6)
+	(up-find-remote c: blacksmith c: 6)
+	(up-find-remote c: monastery c: 4)
+	(up-find-remote c: dock c: 6)
 	(up-find-remote c: livestock-class c: 10)
-	(up-filter-distance c: -1 c: explore-food-radius))
+	(up-filter-distance c: -1 c: raid-eco-radius))
 
-; Prefer closest food to monitored enemy position
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total > 0)
@@ -200,7 +256,6 @@
 	(up-set-target-point enemy-x)
 	(up-clean-search search-remote object-data-distance search-order-asc))
 
-; Drop targets inside enemy TC range
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-find-remote c: town-center c: 1)
@@ -210,7 +265,6 @@
 	(up-set-target-point point-x)
 	(up-filter-distance c: raid-safe-min-dist c: -1))
 
-; Drop targets inside enemy castle range
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-find-remote c: castle c: 1)
@@ -220,7 +274,6 @@
 	(up-set-target-point point-x)
 	(up-filter-distance c: raid-safe-min-dist c: -1))
 
-; Drop targets inside tower range (first tower anchor)
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-find-remote c: tower-class c: 8)
@@ -230,7 +283,7 @@
 	(up-set-target-point point-x)
 	(up-filter-distance c: raid-tower-safe-dist c: -1))
 
-; ======================== CACHE FOOD TARGET FOR ROUTING ========================
+; ======================== CACHE ECO TARGET FOR FLANK ROUTING ========================
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total > 0)
@@ -261,7 +314,6 @@
 	(up-filter-distance c: -1 c: raid-path-scan-dist)
 	(up-modify-goal mem-raid-path-enemy g:= remote-total))
 
-; Enemy cluster on direct path: skip this target and repick
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal mem-raid-has-target == 1)
@@ -278,17 +330,10 @@
 	(up-compare-goal mem-raid-route == 0)
 	(up-group-size c: raid-food-group > 0)
 =>
-	(up-copy-point saved-point-x point4-x)
-	(up-lerp-tiles saved-point-x position-self-x c: raid-site-offset)
-	(set-goal mem-raid-build 1)
-	(set-goal mem-raid-build-step raid-build-step-tc)
-	(set-goal mem-raid-has-site 1)
-	(set-goal mem-raid-stuck 0)
 	(up-copy-point temporary-point-x position-self-x)
 	(up-lerp-percent temporary-point-x point4-x c: raid-route-lerp)
 	(up-cross-tiles temporary-point-x position-self-x c: raid-flank-cross))
 
-; Widen flank when a small enemy screen sits on the direct path (still routable)
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal mem-raid-has-target == 1)
@@ -314,7 +359,6 @@
 	(set-goal mem-raid-retarget 0)
 	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
 
-; No safe food left: hold near self and retry later
 (defrule
 	(up-compare-goal mem-raid-pick == 1)
 	(up-compare-goal remote-total <= 0)
@@ -322,12 +366,12 @@
 	(up-group-size c: raid-food-group > 0)
 =>
 	(up-set-group search-local c: raid-food-group)
-	(up-target-point position-self-x action-move -1 stance-no-attack)
+	(up-target-point saved-point-x action-move -1 stance-no-attack)
 	(set-goal mem-raid-pick 0)
 	(set-goal mem-raid-retarget 0)
 	(up-modify-sn sn-focus-player-number g:= temporary-goal7))
 
-; ======================== DETOUR TO FLANK WAYPOINT ========================
+; ======================== STRIKE: DETOUR TO FLANK WAYPOINT ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-route == 1)
@@ -355,7 +399,7 @@
 =>
 	(set-goal mem-raid-route 2))
 
-; ======================== APPROACH TARGET THEN ENGAGE ========================
+; ======================== STRIKE: APPROACH TARGET THEN ENGAGE ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-route == 2)
@@ -414,17 +458,26 @@
 	(up-full-reset-search)
 	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
 	(up-set-target-point point4-x)
-	(up-find-remote c: villager-class c: 5)
-	(up-find-remote c: farm-class c: 5)
-	(up-find-remote c: mill c: 3)
+	(up-find-remote c: villager-class c: 6)
+	(up-find-remote c: farm-class c: 6)
+	(up-find-remote c: mill c: 4)
+	(up-find-remote c: market c: 4)
+	(up-find-remote c: lumber-camp c: 4)
+	(up-find-remote c: mining-camp c: 4)
+	(up-find-remote c: barracks c: 3)
+	(up-find-remote c: stable c: 2)
+	(up-find-remote c: archery-range c: 2)
+	(up-find-remote c: blacksmith c: 2)
+	(up-find-remote c: monastery c: 2)
+	(up-find-remote c: dock c: 2)
 	(up-find-remote c: livestock-class c: 3)
-	(up-filter-distance c: -1 c: 6)
+	(up-filter-distance c: -1 c: 8)
 	(up-set-group search-local c: raid-food-group)
 	(up-target-objects 0 action-default -1 stance-aggressive)
 	(set-goal mem-raid-route 0)
 	(set-goal mem-raid-path-enemy 0))
 
-; ======================== RETREAT / RETARGET IF AMBUSHED ========================
+; ======================== STRIKE: RETREAT / RETARGET IF AMBUSHED ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-route >= 1)
@@ -457,7 +510,158 @@
 	(set-goal mem-raid-retarget 1)
 	(set-goal mem-raid-path-enemy 0))
 
-; ======================== ESCORT GUARDS BUILD SITE (INDIRECT PATH) ========================
+; ======================== PATROL: MONITOR ENEMY TC / CASTLE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(game-time >= mem-explore-next-scan)
+=>
+	(up-modify-goal mem-explore-next-scan g:= game-time)
+	(up-modify-goal mem-explore-next-scan c:+ explore-scan-cooldown)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-find-remote c: town-center c: 2)
+	(up-find-remote c: castle c: 2))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal remote-total > 0)
+	(up-set-target-object search-remote c: 0)
+=>
+	(up-get-point position-object point4-x)
+	(set-goal mem-explore-enemy-seen 1))
+
+; ======================== PATROL: SCAN THREAT NEAR GROUP ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+=>
+	(up-set-group search-local c: raid-patrol-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point point2-x)
+	(up-find-remote c: militiaman-line c: 14)
+	(up-find-remote c: archer-line c: 14)
+	(up-find-remote c: skirmisher-line c: 14)
+	(up-find-remote c: scout-cavalry-line c: 14)
+	(up-find-remote c: knight-line c: 14)
+	(up-find-remote c: cavalry-archer-line c: 14)
+	(up-filter-distance c: -1 c: explore-threat-scan-dist)
+	(up-modify-goal mem-raid-path-enemy g:= remote-total))
+
+; ======================== PATROL: PLAN FLANK WAYPOINTS (ROTATE) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-build == 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal mem-raid-stuck == 0)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: raid-patrol-lerp))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-build == 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal mem-raid-stuck == 1)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: raid-patrol-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: raid-patrol-cross))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-build == 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal mem-raid-stuck == 2)
+=>
+	(up-copy-point temporary-point-x position-self-x)
+	(up-lerp-percent temporary-point-x enemy-x c: raid-patrol-lerp)
+	(up-cross-tiles temporary-point-x position-self-x c: raid-patrol-wide))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-build == 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal mem-raid-stuck >= 3)
+=>
+	(up-copy-point temporary-point-x enemy-x)
+	(up-lerp-percent temporary-point-x position-self-x c: 35)
+	(up-cross-tiles temporary-point-x position-self-x c: raid-patrol-cross))
+
+; ======================== PATROL: RETREAT FROM LARGE GROUPS ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:>= raid-patrol-large-min)
+	(building-type-count town-center >= 1)
+=>
+	(up-full-reset-search)
+	(up-find-local c: town-center c: 1)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object temporary-point-x)
+	(up-set-group search-local c: raid-patrol-group)
+	(up-target-point temporary-point-x action-move -1 stance-no-attack))
+
+; ======================== PATROL: ATTACK SMALL ENEMY GROUPS ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:> 0)
+	(up-compare-goal mem-raid-path-enemy g:<= raid-patrol-attack-max)
+=>
+	(up-set-group search-local c: raid-patrol-group)
+	(up-set-target-point point2-x)
+	(up-target-objects 0 action-default -1 stance-aggressive))
+
+; ======================== PATROL: MOVE ALONG FLANK (MONITOR) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+=>
+	(up-set-group search-local c: raid-patrol-group)
+	(up-set-target-point position-self-x)
+	(up-clean-search search-local object-data-distance search-order-desc)
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point2-x)
+	(up-get-point-distance point2-x temporary-point-x point-distance))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal point-distance g:> raid-patrol-arrive)
+=>
+	(up-set-group search-local c: raid-patrol-group)
+	(up-target-point temporary-point-x action-move -1 stance-defensive))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-group-size c: raid-patrol-group > 0)
+	(up-compare-goal mem-raid-path-enemy g:< raid-patrol-large-min)
+	(up-compare-goal point-distance g:<= raid-patrol-arrive)
+	(up-compare-goal mem-raid-build == 0)
+=>
+	(up-modify-goal mem-raid-stuck c:+ 1))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 0)
+	(up-compare-goal mem-raid-stuck >= 4)
+=>
+	(set-goal mem-raid-stuck 0))
+
+; ======================== ESCORT: GUARD BUILD SITE (INDIRECT PATH) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-has-site == 1)
@@ -468,6 +672,43 @@
 	(up-cross-tiles point3-x position-self-x c: raid-flank-cross)
 	(up-set-group search-local c: raid-escort-group)
 	(up-target-point point3-x action-move -1 stance-defensive))
+
+; ======================== ESCORT: DEFEND FORWARD BASE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-compare-goal mem-raid-pick != 1)
+	(up-group-size c: raid-escort-group > 0)
+=>
+	(up-full-reset-search)
+	(up-modify-sn sn-focus-player-number s:= sn-target-player-number)
+	(up-set-target-point saved-point-x)
+	(up-find-remote c: militiaman-line c: 12)
+	(up-find-remote c: archer-line c: 12)
+	(up-find-remote c: scout-cavalry-line c: 12)
+	(up-find-remote c: knight-line c: 12)
+	(up-filter-distance c: -1 c: raid-site-defend-dist)
+	(up-modify-goal mem-explore-threat-near g:= remote-total))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-group-size c: raid-escort-group > 0)
+	(up-compare-goal mem-explore-threat-near g:> 0)
+	(up-compare-goal mem-explore-threat-near g:< raid-enemy-block-min)
+=>
+	(up-set-group search-local c: raid-escort-group)
+	(up-set-target-point saved-point-x)
+	(up-target-objects 0 action-default -1 stance-defensive))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-group-size c: raid-escort-group > 0)
+	(up-compare-goal mem-explore-threat-near g:>= raid-enemy-block-min)
+=>
+	(up-set-group search-local c: raid-escort-group)
+	(up-target-point position-self-x action-move -1 stance-defensive))
 
 ; ======================== SEND BUILDERS TO SITE (INDIRECT PATH) ========================
 (defrule
@@ -512,7 +753,7 @@
 =>
 	(set-goal mem-raid-build-step raid-build-step-tower))
 
-; ======================== FORWARD TOWER (ATTACK / GUARD) ========================
+; ======================== FORWARD TOWER ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -531,9 +772,73 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-tower)
 =>
+	(set-goal mem-raid-build-step raid-build-step-castle))
+
+; ======================== FORWARD CASTLE ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
+	(current-age >= castle-age)
+	(stone-amount >= raid-castle-stone-min)
+	(can-build castle)
+	(up-pending-objects c: castle < 1)
+	(up-can-build-line 0 saved-point-x c: castle)
+=>
+	(set-strategic-number sn-ignore-tower-elevation 1)
+	(up-build-line saved-point-x saved-point-x c: castle)
+	(up-assign-builders c: castle g: mem-build-struct-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
+=>
 	(set-goal mem-raid-build-step raid-build-step-wall))
 
-; ======================== GATE (over existing wall) ========================
+; ======================== WALL SEGMENT (CLOSE COMPOUND) ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+=>
+	(up-copy-point point3-x saved-point-x)
+	(up-lerp-tiles point3-x enemy-x c: 4))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(current-age >= feudal-age)
+	(current-age < castle-age)
+	(wood-amount >= wall-segment-wood)
+	(up-pending-objects c: palisade-wall < 2)
+	(up-can-build-line saved-point-x point3-x c: palisade-wall)
+=>
+	(up-build-line saved-point-x point3-x c: palisade-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-wall < 2)
+	(up-can-build-line saved-point-x point3-x c: stone-wall)
+=>
+	(up-build-line saved-point-x point3-x c: stone-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+=>
+	(set-goal mem-raid-build-step raid-build-step-gate))
+
+; ======================== GATE (OVER EXISTING WALL) ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
 	(up-compare-goal mem-raid-build == 1)
@@ -641,71 +946,64 @@
 	(up-compare-goal mem-raid-build == 1)
 	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
 =>
-	(set-goal mem-raid-build-step raid-build-step-castle))
-
-; ======================== OPTIONAL FORWARD CASTLE ========================
-(defrule
-	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
-	(current-age >= castle-age)
-	(stone-amount >= raid-castle-stone-min)
-	(can-build castle)
-	(up-pending-objects c: castle < 1)
-	(up-can-build-line 0 saved-point-x c: castle)
-=>
-	(set-strategic-number sn-ignore-tower-elevation 1)
-	(up-build-line saved-point-x saved-point-x c: castle)
-	(up-assign-builders c: castle g: mem-build-struct-vills)
-	(set-goal mem-raid-stuck 0))
-
-(defrule
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-castle)
-=>
 	(set-goal mem-raid-build-step raid-build-step-done))
 
-; ======================== WALL SEGMENT (CLOSE COMPOUND) ========================
+; ======================== REPAIR FORWARD BASE ========================
 (defrule
 	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-group-size c: raid-builder-group > 0)
 =>
-	(up-copy-point point3-x saved-point-x)
-	(up-lerp-tiles point3-x enemy-x c: 4))
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: wall-class c: 16)
+	(up-find-local c: gate-class c: 8)
+	(up-find-local c: tower-class c: 4)
+	(up-filter-distance c: -1 c: raid-repair-radius)
+	(up-remove-objects search-local object-data-hitpoints g:>= stronghold-wall-hp-full)
+	(up-get-search-state local-total))
 
 (defrule
 	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-group-size c: raid-builder-group > 0)
+	(up-compare-goal local-total > 0)
+	(up-set-target-object search-local c: 0)
+=>
+	(up-get-object-data object-data-id temporary-goal)
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-filter-distance c: -1 c: raid-repair-radius)
+	(up-find-local c: villager g: mem-build-repair-vills)
+	(up-remove-objects search-local object-data-order == orderid-repair)
+	(up-add-object-by-id search-remote g: temporary-goal)
+	(up-target-objects 0 action-default -1 -1))
+
+; ======================== REBUILD MISSING FORWARD WALL ========================
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-compare-goal mem-raid-build == 0)
 	(current-age >= feudal-age)
 	(current-age < castle-age)
 	(wood-amount >= wall-segment-wood)
-	(up-pending-objects c: palisade-wall < 2)
-	(up-can-build-line saved-point-x point3-x c: palisade-wall)
+	(not (up-point-contains saved-point-x c: wall-class))
+	(up-can-build-line 0 saved-point-x c: palisade-wall)
 =>
-	(up-build-line saved-point-x point3-x c: palisade-wall)
-	(up-assign-builders c: wall-class g: mem-build-wall-vills)
-	(set-goal mem-raid-stuck 0))
+	(up-build-line saved-point-x saved-point-x c: palisade-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills))
 
 (defrule
 	(up-compare-goal mem-raid-active == 1)
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
+	(up-compare-goal mem-raid-has-site == 1)
+	(up-compare-goal mem-raid-build == 0)
 	(current-age >= castle-age)
 	(stone-amount >= raid-stone-segment-min)
-	(up-pending-objects c: stone-wall < 2)
-	(up-can-build-line saved-point-x point3-x c: stone-wall)
+	(not (up-point-contains saved-point-x c: wall-class))
+	(up-can-build-line 0 saved-point-x c: stone-wall)
 =>
-	(up-build-line saved-point-x point3-x c: stone-wall)
-	(up-assign-builders c: wall-class g: mem-build-wall-vills)
-	(set-goal mem-raid-stuck 0))
-
-(defrule
-	(up-compare-goal mem-raid-build == 1)
-	(up-compare-goal mem-raid-build-step == raid-build-step-wall)
-=>
-	(set-goal mem-raid-build-step raid-build-step-gate))
+	(up-build-line saved-point-x saved-point-x c: stone-wall)
+	(up-assign-builders c: wall-class g: mem-build-wall-vills))
 
 ; ======================== FORWARD BUILD DONE / RETRY ========================
 (defrule
@@ -713,7 +1011,8 @@
 	(up-compare-goal mem-raid-build-step >= raid-build-step-done)
 =>
 	(set-goal mem-raid-build 0)
-	(set-goal mem-raid-build-step 0))
+	(set-goal mem-raid-build-step 0)
+	(set-goal mem-raid-stuck 0))
 
 (defrule
 	(up-compare-goal mem-raid-build == 1)

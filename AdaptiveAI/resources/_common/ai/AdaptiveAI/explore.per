@@ -42,6 +42,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-group-size c: explore-army-group < explore-army-min)
 	(military-population >= explore-army-min)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 =>
 	(up-modify-group-flag 0 c: explore-army-group)
 	(up-reset-group c: explore-army-group)
@@ -184,6 +186,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal mem-explore-waypoint == 0)
 =>
 	(up-copy-point temporary-point-x position-self-x)
@@ -193,6 +197,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal mem-explore-waypoint == 1)
 =>
 	(up-copy-point temporary-point-x position-self-x)
@@ -203,6 +209,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal mem-explore-waypoint == 2)
 =>
 	(up-copy-point temporary-point-x position-self-x)
@@ -213,6 +221,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal mem-explore-waypoint >= 3)
 =>
 	(up-copy-point temporary-point-x enemy-x)
@@ -224,6 +234,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 =>
 	(up-set-group search-local c: explore-army-group)
 	(up-set-target-point position-self-x)
@@ -236,6 +248,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal point-distance g:> explore-waypoint-arrive)
 =>
 	(up-set-group search-local c: explore-army-group)
@@ -245,6 +259,8 @@
 	(up-compare-goal mem-explore-active == 1)
 	(up-compare-goal mem-explore-retreat != 1)
 	(up-group-size c: explore-army-group > 0)
+(or	(up-compare-goal mem-raid-active != 1)
+	(up-group-size c: raid-patrol-group < raid-patrol-min))
 	(up-compare-goal point-distance g:<= explore-waypoint-arrive)
 =>
 	(up-modify-goal mem-explore-waypoint c:+ 1))
