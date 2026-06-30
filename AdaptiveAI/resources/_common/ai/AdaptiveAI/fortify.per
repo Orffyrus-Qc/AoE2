@@ -3,12 +3,6 @@
 ; Extends defense + towers with more sites, stone tiers, and repeating waves.
 ;==============================================================================
 
-; ======================== GATE TYPE WRAP (0-3) ========================
-(defrule
-	(up-compare-goal mem-wall-gate-type >= 4)
-=>
-	(set-goal mem-wall-gate-type wall-gate-type0))
-
 ; ======================== WALL TIER BY AGE (only with stable eco) ========================
 (defrule
 	(current-age >= castle-age)
@@ -243,8 +237,7 @@
 =>
 	(set-goal mem-wall-site wall-site-outer2)
 	(set-goal mem-wall-segments wall-choke-seg-left)
-	(set-goal mem-wall-stuck 0)
-	(up-modify-goal mem-wall-gate-type c:+ 1))
+	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -253,8 +246,7 @@
 =>
 	(set-goal mem-wall-site wall-site-forward3)
 	(set-goal mem-wall-segments wall-choke-seg-left)
-	(set-goal mem-wall-stuck 0)
-	(up-modify-goal mem-wall-gate-type c:+ 1))
+	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -263,8 +255,7 @@
 =>
 	(set-goal mem-wall-site wall-site-forward4)
 	(set-goal mem-wall-segments wall-choke-seg-left)
-	(set-goal mem-wall-stuck 0)
-	(up-modify-goal mem-wall-gate-type c:+ 1))
+	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -274,8 +265,7 @@
 =>
 	(set-goal mem-wall-site wall-site-stone-ring)
 	(set-goal mem-wall-segments wall-side-south)
-	(set-goal mem-wall-stuck 0)
-	(up-modify-goal mem-wall-gate-type c:+ 1))
+	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
@@ -365,15 +355,15 @@
 	(up-assign-builders c: wall-class c: 2)
 	(set-goal mem-wall-stuck 0))
 
-; ======================== ROTATING GATES (PALISADE) — over existing wall ========================
+; ======================== CHOKE GATES (PALISADE) — wall-aligned orientation ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-outer1)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier == wall-tier-palisade)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type0)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
 	(up-can-build-line 0 saved-point-x c: palisade-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
@@ -387,9 +377,9 @@
 	(up-compare-goal mem-wall-site >= wall-site-outer1)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier == wall-tier-palisade)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type1)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
 	(up-can-build-line 0 saved-point-x c: palisade-gate2)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
@@ -403,9 +393,9 @@
 	(up-compare-goal mem-wall-site >= wall-site-outer1)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier == wall-tier-palisade)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type2)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
 	(up-can-build-line 0 saved-point-x c: palisade-gate3)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
@@ -419,9 +409,9 @@
 	(up-compare-goal mem-wall-site >= wall-site-outer1)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier == wall-tier-palisade)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type3)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
@@ -430,16 +420,16 @@
 	(set-goal mem-wall-segments wall-choke-seg-done)
 	(set-goal mem-wall-stuck 0))
 
-; ======================== ROTATING GATES (STONE, CASTLE+) ========================
+; ======================== CHOKE GATES (STONE) — wall-aligned orientation ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-outer1)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier >= wall-tier-stone)
 	(current-age >= castle-age)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type0)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
@@ -453,9 +443,9 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier >= wall-tier-stone)
 	(current-age >= castle-age)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type1)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
 	(up-can-build-line 0 saved-point-x c: stone-gate2)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate2)
@@ -469,9 +459,9 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier >= wall-tier-stone)
 	(current-age >= castle-age)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type2)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
 	(up-can-build-line 0 saved-point-x c: stone-gate3)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate3)
@@ -485,9 +475,9 @@
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
 	(up-compare-goal mem-wall-tier >= wall-tier-stone)
 	(current-age >= castle-age)
-	(up-compare-goal mem-wall-gate-type == wall-gate-type3)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
 	(up-can-build-line 0 saved-point-x c: stone-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate4)

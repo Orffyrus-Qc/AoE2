@@ -1,0 +1,162 @@
+;==============================================================================
+; AdaptiveAI v2.7 - Pick gate orientation aligned with wall at saved-point-x
+; Uses adjacent wall axis (Promisory-style) then up-can-build-line probe.
+; Modules build palisade-gate(align+1) / stone-gate(align+1) when mem-gate-align
+; or mem-gate-stone-align is 0-3.
+;==============================================================================
+
+(defrule
+	(true)
+=>
+	(set-goal mem-gate-align gate-align-none)
+	(set-goal mem-gate-stone-align gate-align-none))
+
+; ======================== WALL AXIS AT GATE TILE ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+=>
+	(up-full-reset-search)
+	(up-set-target-point saved-point-x)
+	(up-find-local c: wall-class c: 8)
+	(up-filter-distance c: -1 c: 3)
+	(up-get-search-state local-total))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal local-total >= 2)
+=>
+	(up-set-target-object search-local c: 0)
+	(up-get-point position-object point4-x)
+	(up-set-target-object search-local c: 1)
+	(up-get-point position-object point3-x)
+	(up-modify-goal point3-x g:- point4-x))
+
+; ======================== PALISADE ALIGN (HORIZONTAL WALL: DX != 0) ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x != 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(set-goal mem-gate-align 0))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x != 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(set-goal mem-gate-align 2))
+
+; ======================== PALISADE ALIGN (VERTICAL WALL: DX == 0) ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(set-goal mem-gate-align 1))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(set-goal mem-gate-align 3))
+
+; ======================== PALISADE ALIGN FALLBACK (PROBE ALL) ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(set-goal mem-gate-align 0))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(set-goal mem-gate-align 1))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(set-goal mem-gate-align 2))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(set-goal mem-gate-align 3))
+
+; ======================== STONE ALIGN (HORIZONTAL WALL) ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x != 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(set-goal mem-gate-stone-align 0))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x != 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(set-goal mem-gate-stone-align 2))
+
+; ======================== STONE ALIGN (VERTICAL WALL) ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x == 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(set-goal mem-gate-stone-align 1))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-compare-goal local-total >= 2)
+	(up-compare-goal point3-x == 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(set-goal mem-gate-stone-align 3))
+
+; ======================== STONE ALIGN FALLBACK ========================
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(set-goal mem-gate-stone-align 0))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(set-goal mem-gate-stone-align 1))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(set-goal mem-gate-stone-align 2))
+
+(defrule
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == gate-align-none)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(set-goal mem-gate-stone-align 3))

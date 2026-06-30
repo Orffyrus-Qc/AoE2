@@ -544,10 +544,56 @@
 	(stone-amount >= raid-stone-segment-min)
 	(up-pending-objects c: stone-gate1 < 1)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
 	(up-assign-builders c: stone-gate1 g: mem-build-gate-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-gate2 < 1)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: stone-gate2 g: mem-build-gate-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-gate3 < 1)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: stone-gate3 g: mem-build-gate-vills)
+	(set-goal mem-raid-stuck 0))
+
+(defrule
+	(up-compare-goal mem-raid-active == 1)
+	(up-compare-goal mem-raid-build == 1)
+	(up-compare-goal mem-raid-build-step == raid-build-step-gate)
+	(current-age >= castle-age)
+	(stone-amount >= raid-stone-segment-min)
+	(up-pending-objects c: stone-gate4 < 1)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: stone-gate4 g: mem-build-gate-vills)
 	(set-goal mem-raid-stuck 0))
 
 (defrule

@@ -106,42 +106,64 @@
 	(up-copy-point saved-point-x point-x)
 	(up-lerp-percent saved-point-x point2-x c: 50))
 
-; ======================== RESOURCE GATES (TOWARD TC) — over existing wall ========================
+; ======================== RESOURCE GATES — wall-aligned on perimeter ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-res-lumber)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
 	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
-	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
 =>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
-	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
 	(up-assign-builders c: wall-class c: 1)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-res-mill)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
 	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
-	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+	(up-compare-goal mem-gate-align == 1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
 =>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
-	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
 	(up-assign-builders c: wall-class c: 1)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-res-mine)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
 	(up-compare-goal mem-wall-segments >= 4)
 	(building-type-count-total gate < wall-gate-target)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site >= wall-site-res-lumber)
+	(up-compare-goal mem-wall-site <= wall-site-res-mine)
+	(up-compare-goal mem-wall-segments >= 4)
+	(building-type-count-total gate < wall-gate-target)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)

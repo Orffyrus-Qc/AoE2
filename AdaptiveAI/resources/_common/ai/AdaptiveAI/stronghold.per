@@ -219,12 +219,6 @@
 	(up-lerp-percent saved-point-x point-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-south))
 
-; ======================== GATE TYPE WRAP ========================
-(defrule
-	(up-compare-goal mem-stronghold-gate-type >= 4)
-=>
-	(set-goal mem-stronghold-gate-type wall-gate-type0))
-
 ; ======================== GATE WALL STUB (PALISADE) ========================
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
@@ -240,15 +234,15 @@
 	(up-assign-builders c: wall-class c: 2)
 	(set-goal mem-wall-stuck 0))
 
-; ======================== GATES (4 SIDES, PALISADE TC) — over existing wall ========================
+; ======================== GATES (PALISADE TC) — wall-aligned at each side ========================
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
 	(wood-amount >= wall-segment-wood)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type0)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
 	(up-can-build-line 0 saved-point-x c: palisade-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
@@ -257,7 +251,60 @@
 	(up-copy-point saved-point-x point-x)
 	(up-lerp-percent saved-point-x point2-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -266,8 +313,26 @@
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
 	(wood-amount >= wall-segment-wood)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type1)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
 	(up-can-build-line 0 saved-point-x c: palisade-gate2)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
@@ -276,7 +341,42 @@
 	(up-copy-point saved-point-x point3-x)
 	(up-lerp-percent saved-point-x point2-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -285,8 +385,44 @@
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
 	(wood-amount >= wall-segment-wood)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type2)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
 	(up-can-build-line 0 saved-point-x c: palisade-gate3)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
@@ -295,7 +431,24 @@
 	(up-copy-point saved-point-x point4-x)
 	(up-lerp-percent saved-point-x point3-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -304,15 +457,62 @@
 	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
 	(wood-amount >= wall-segment-wood)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type3)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-castle)
+	(up-compare-goal mem-stronghold-mode != stronghold-mode-maintain-castle)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
 	(up-assign-builders c: palisade-gate-foundation4 c: 2)
 	(up-assign-builders c: wall-class c: 1)
 	(set-goal mem-stronghold-seg stronghold-seg-done)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
 	(set-goal mem-wall-stuck 0))
 
 ; ======================== GATE WALL STUB (STONE) ========================
@@ -331,15 +531,15 @@
 	(up-assign-builders c: wall-class c: 2)
 	(set-goal mem-wall-stuck 0))
 
-; ======================== GATES (4 SIDES, STONE CASTLE) — over existing wall ========================
+; ======================== GATES (STONE CASTLE) — wall-aligned at each side ========================
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
 	(stone-amount >= fort-stone-min)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type0)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
@@ -347,7 +547,57 @@
 	(up-copy-point saved-point-x point-x)
 	(up-lerp-percent saved-point-x point2-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-east)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -356,8 +606,25 @@
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
 	(stone-amount >= fort-stone-min)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type1)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
 	(up-can-build-line 0 saved-point-x c: stone-gate2)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate2)
@@ -365,7 +632,40 @@
 	(up-copy-point saved-point-x point3-x)
 	(up-lerp-percent saved-point-x point2-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-north)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -374,8 +674,42 @@
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
 	(stone-amount >= fort-stone-min)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type2)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
 	(up-can-build-line 0 saved-point-x c: stone-gate3)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate3)
@@ -383,7 +717,23 @@
 	(up-copy-point saved-point-x point4-x)
 	(up-lerp-percent saved-point-x point3-x c: 50)
 	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
+	(up-can-build-line 0 saved-point-x c: stone-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate4)
+	(up-assign-builders c: wall-class c: 2)
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50)
+	(set-goal mem-stronghold-seg stronghold-seg-wall-west)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -392,14 +742,58 @@
 	(current-age >= castle-age)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
 	(stone-amount >= fort-stone-min)
-	(up-compare-goal mem-stronghold-gate-type == wall-gate-type3)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
+	(up-can-build-line 0 saved-point-x c: stone-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate1)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
+	(up-can-build-line 0 saved-point-x c: stone-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate2)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
+	(up-can-build-line 0 saved-point-x c: stone-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: stone-gate3)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-stronghold-seg stronghold-seg-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-stronghold-active == 1)
+	(up-compare-goal mem-stronghold-mode == stronghold-mode-castle)
+	(current-age >= castle-age)
+	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(stone-amount >= fort-stone-min)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
 	(up-can-build-line 0 saved-point-x c: stone-gate4)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate4)
 	(up-assign-builders c: wall-class c: 2)
 	(set-goal mem-stronghold-seg stronghold-seg-done)
-	(up-modify-goal mem-stronghold-gate-type c:+ 1)
 	(set-goal mem-wall-stuck 0))
 
 ; ======================== WALL SEGMENTS (PALISADE) ========================
@@ -768,9 +1162,11 @@
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
 	(up-can-build-line 0 saved-point-x c: palisade-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
@@ -779,39 +1175,39 @@
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
 	(up-can-build-line 0 saved-point-x c: palisade-gate2)
 =>
-	(up-copy-point saved-point-x point-x)
-	(up-lerp-percent saved-point-x point2-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
 	(up-assign-builders c: palisade-gate-foundation2 c: 2))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
 	(up-can-build-line 0 saved-point-x c: palisade-gate3)
 =>
-	(up-copy-point saved-point-x point3-x)
-	(up-lerp-percent saved-point-x point2-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
 	(up-assign-builders c: palisade-gate-foundation3 c: 2))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
 	(up-can-build-line 0 saved-point-x c: palisade-gate4)
 =>
-	(up-copy-point saved-point-x point4-x)
-	(up-lerp-percent saved-point-x point3-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
 	(up-assign-builders c: palisade-gate-foundation4 c: 2))
 
@@ -819,9 +1215,11 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(current-age >= castle-age)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 0)
 	(up-can-build-line 0 saved-point-x c: stone-gate1)
 =>
 	(up-build-line saved-point-x saved-point-x c: stone-gate1)
@@ -831,13 +1229,13 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(current-age >= castle-age)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-east)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 1)
 	(up-can-build-line 0 saved-point-x c: stone-gate2)
 =>
-	(up-copy-point saved-point-x point-x)
-	(up-lerp-percent saved-point-x point2-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: stone-gate2)
 	(up-assign-builders c: wall-class c: 2))
 
@@ -845,13 +1243,13 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(current-age >= castle-age)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-north)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 2)
 	(up-can-build-line 0 saved-point-x c: stone-gate3)
 =>
-	(up-copy-point saved-point-x point3-x)
-	(up-lerp-percent saved-point-x point2-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: stone-gate3)
 	(up-assign-builders c: wall-class c: 2))
 
@@ -859,13 +1257,13 @@
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-mode == stronghold-mode-maintain-castle)
 	(current-age >= castle-age)
-	(up-compare-goal mem-stronghold-seg == stronghold-seg-gate-west)
+	(up-compare-goal mem-stronghold-seg >= stronghold-seg-gate-south)
+	(up-compare-goal mem-stronghold-seg <= stronghold-seg-gate-west)
 	(stone-amount >= fort-stone-min)
 	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-stone-align == 3)
 	(up-can-build-line 0 saved-point-x c: stone-gate4)
 =>
-	(up-copy-point saved-point-x point4-x)
-	(up-lerp-percent saved-point-x point3-x c: 50)
 	(up-build-line saved-point-x saved-point-x c: stone-gate4)
 	(up-assign-builders c: wall-class c: 2))
 
