@@ -1,6 +1,6 @@
 ;==============================================================================
-; AdaptiveAI v2.9 - TC palisade box + choke walls (fortify priority)
-; Site 0: four sides then gate on first east segment. Sites 1-2: gate then flank walls.
+; AdaptiveAI v3.0 - TC defensive ring + choke walls (fortify priority)
+; Site 0: full wall ring, one gate on longest side. Sites 1-2: long choke gates only.
 ;==============================================================================
 
 ; ======================== DONE / ABORT ========================
@@ -209,7 +209,41 @@
 	(up-modify-goal point4-x c:- wall-box-padding)
 	(up-modify-goal point4-y c:- wall-box-padding)
 	(up-modify-goal point-x c:+ wall-box-padding)
-	(up-modify-goal point-y c:- wall-box-padding))
+	(up-modify-goal point-y c:- wall-box-padding)
+	(up-get-point-distance point4-x point-x point-distance)
+	(set-goal mem-compound-gate-side wall-side-south)
+	(set-goal mem-compound-side-len g:= point-distance))
+
+; ======================== PICK LONGEST TC GATE SIDE ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-compare-goal point-distance g:> mem-compound-side-len)
+=>
+	(set-goal mem-compound-gate-side wall-side-east)
+	(set-goal mem-compound-side-len g:= point-distance))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-get-point-distance point3-x point2-x point-distance)
+	(up-compare-goal point-distance g:> mem-compound-side-len)
+=>
+	(set-goal mem-compound-gate-side wall-side-north)
+	(set-goal mem-compound-side-len g:= point-distance))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-side-south)
+	(up-get-point-distance point4-x point3-x point-distance)
+	(up-compare-goal point-distance g:> mem-compound-side-len)
+=>
+	(set-goal mem-compound-gate-side wall-side-west)
+	(set-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GEOMETRY: MAIN CHOKE (SITE 1) ========================
 (defrule
@@ -246,113 +280,23 @@
 	(up-cross-tiles point-x position-self-x c: wall-choke-half)
 	(up-cross-tiles point2-x position-self-x c: wall-choke-half-neg))
 
-; ======================== TC GATE STUB (SITE 0, FIRST EAST SEGMENT) ========================
+; ======================== CHOKE: SKIP GATE ON SHORT LINE ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-	(building-type-count-total gate < 1)
-	(not (up-point-contains saved-point-x c: wall-class))
-	(wood-amount >= wall-segment-wood)
-	(up-can-build-line 0 saved-point-x c: palisade-wall)
+	(up-compare-goal mem-wall-site >= wall-site-choke-main)
+	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-compare-goal point-distance g:< wall-gate-min-tiles)
 =>
-	(up-build-line saved-point-x saved-point-x c: palisade-wall)
-	(up-assign-builders c: wall-class c: 2)
-	(set-goal mem-wall-stuck 0))
-
-; ======================== TC GATE (SITE 0, FIRST EAST SEGMENT) ========================
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate >= 1)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-=>
-	(up-lerp-tiles saved-point-x point2-x c: stronghold-gate-advance)
-	(set-goal mem-wall-segments wall-seg-tc-east-rest))
-
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate < 1)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-	(wood-amount >= wall-segment-wood)
-	(up-point-contains saved-point-x c: wall-class)
-	(up-compare-goal mem-gate-align == 0)
-	(up-can-build-line 0 saved-point-x c: palisade-gate1)
-=>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
-	(up-assign-builders c: palisade-gate-foundation1 c: 2)
-	(up-assign-builders c: wall-class c: 1)
-	(up-lerp-tiles saved-point-x point2-x c: stronghold-gate-advance)
-	(set-goal mem-wall-segments wall-seg-tc-east-rest)
-	(set-goal mem-wall-stuck 0))
-
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate < 1)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-	(wood-amount >= wall-segment-wood)
-	(up-point-contains saved-point-x c: wall-class)
-	(up-compare-goal mem-gate-align == 1)
-	(up-can-build-line 0 saved-point-x c: palisade-gate2)
-=>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
-	(up-assign-builders c: palisade-gate-foundation2 c: 2)
-	(up-assign-builders c: wall-class c: 1)
-	(up-lerp-tiles saved-point-x point2-x c: stronghold-gate-advance)
-	(set-goal mem-wall-segments wall-seg-tc-east-rest)
-	(set-goal mem-wall-stuck 0))
-
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate < 1)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-	(wood-amount >= wall-segment-wood)
-	(up-point-contains saved-point-x c: wall-class)
-	(up-compare-goal mem-gate-align == 2)
-	(up-can-build-line 0 saved-point-x c: palisade-gate3)
-=>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
-	(up-assign-builders c: palisade-gate-foundation3 c: 2)
-	(up-assign-builders c: wall-class c: 1)
-	(up-lerp-tiles saved-point-x point2-x c: stronghold-gate-advance)
-	(set-goal mem-wall-segments wall-seg-tc-east-rest)
-	(set-goal mem-wall-stuck 0))
-
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate < 1)
-	(up-compare-goal mem-wall-segments == wall-side-east)
-	(wood-amount >= wall-segment-wood)
-	(up-point-contains saved-point-x c: wall-class)
-	(up-compare-goal mem-gate-align == 3)
-	(up-can-build-line 0 saved-point-x c: palisade-gate4)
-=>
-	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
-	(up-assign-builders c: palisade-gate-foundation4 c: 2)
-	(up-assign-builders c: wall-class c: 1)
-	(up-lerp-tiles saved-point-x point2-x c: stronghold-gate-advance)
-	(set-goal mem-wall-segments wall-seg-tc-east-rest)
-	(set-goal mem-wall-stuck 0))
-
-(defrule
-	(up-compare-goal mem-wall-phase == wall-phase-build)
-	(up-compare-goal mem-wall-site == wall-site-tc)
-	(building-type-count-total gate < 1)
-	(up-point-contains saved-point-x c: tree-class)
-	(up-compare-goal mem-wall-stuck < wall-gate-retry-max)
-=>
-	(up-modify-goal mem-wall-stuck c:+ 1)
-	(up-lerp-tiles saved-point-x point2-x c: 1))
+	(set-goal mem-wall-segments wall-choke-seg-left))
 
 ; ======================== CHOKE GATE STUB (FIRST SEGMENT) ========================
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-compare-goal point-distance g:>= wall-gate-min-tiles)
 	(not (up-point-contains saved-point-x c: wall-class))
 	(wood-amount >= wall-segment-wood)
 	(up-can-build-line 0 saved-point-x c: palisade-wall)
@@ -382,6 +326,8 @@
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site >= wall-site-choke-main)
 	(up-compare-goal mem-wall-segments == wall-choke-seg-gate)
+	(up-get-point-distance point-x point2-x point-distance)
+	(up-compare-goal point-distance g:>= wall-gate-min-tiles)
 	(wood-amount >= wall-segment-wood)
 	(up-point-contains saved-point-x c: wall-class)
 	(up-compare-goal mem-gate-align == 0)
@@ -469,9 +415,8 @@
 	(up-compare-goal mem-wall-site == wall-site-tc)
 	(up-compare-goal mem-wall-segments >= wall-seg-tc-done)
 =>
-	(set-goal mem-wall-site wall-site-res-lumber)
-	(set-goal mem-wall-segments wall-side-south)
-	(set-goal mem-wall-dir wall-side-east)
+	(set-goal mem-wall-site wall-site-choke-main)
+	(set-goal mem-wall-segments wall-choke-seg-gate)
 	(set-goal mem-wall-stuck 0))
 
 (defrule
@@ -545,7 +490,6 @@
 =>
 	(up-build-line point4-x point3-x c: palisade-wall)
 	(up-assign-builders c: wall-class c: 1)
-	(up-copy-point saved-point-x point-x)
 	(set-goal mem-wall-segments wall-side-east))
 
 (defrule
@@ -554,27 +498,171 @@
 	(up-compare-goal mem-wall-segments == wall-side-west)
 	(up-compare-goal mem-wall-dir == wall-side-west)
 =>
-	(up-copy-point saved-point-x point-x)
 	(set-goal mem-wall-segments wall-side-east))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
-	(up-compare-goal mem-wall-segments == wall-seg-tc-east-rest)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir != wall-side-east)
 	(wood-amount >= wall-segment-wood)
 	(up-pending-objects c: palisade-wall < wall-pending-max)
-	(up-can-build-line saved-point-x point2-x c: palisade-wall)
+	(up-can-build-line point-x point2-x c: palisade-wall)
 =>
-	(up-build-line saved-point-x point2-x c: palisade-wall)
+	(up-build-line point-x point2-x c: palisade-wall)
 	(up-assign-builders c: wall-class c: 1))
 
 (defrule
 	(up-compare-goal mem-wall-phase == wall-phase-build)
 	(up-compare-goal mem-wall-site == wall-site-tc)
-	(up-compare-goal mem-wall-segments == wall-seg-tc-east-rest)
-	(not (up-can-build-line saved-point-x point2-x c: palisade-wall))
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(up-compare-goal mem-wall-dir == wall-side-east)
+=>
+	(set-goal mem-wall-segments wall-seg-tc-gate-access))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-side-east)
+	(not (up-can-build-line point-x point2-x c: palisade-wall))
+=>
+	(set-goal mem-wall-segments wall-seg-tc-gate-access))
+
+; ======================== TC GATE ACCESS (LONG SIDE MIDPOINT) ========================
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-gate-side == wall-side-south)
+=>
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point-x c: 50))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-gate-side == wall-side-east)
+=>
+	(up-copy-point saved-point-x point-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-gate-side == wall-side-north)
+=>
+	(up-copy-point saved-point-x point3-x)
+	(up-lerp-percent saved-point-x point2-x c: 50))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-gate-side == wall-side-west)
+=>
+	(up-copy-point saved-point-x point4-x)
+	(up-lerp-percent saved-point-x point3-x c: 50))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:< wall-gate-min-tiles)
 =>
 	(set-goal mem-wall-segments wall-seg-tc-done))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate >= 1)
+=>
+	(set-goal mem-wall-segments wall-seg-tc-done))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate < 1)
+	(not (up-point-contains saved-point-x c: wall-class))
+	(wood-amount >= wall-segment-wood)
+	(up-can-build-line 0 saved-point-x c: palisade-wall)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-wall)
+	(up-assign-builders c: wall-class c: 2)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate < 1)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 0)
+	(up-can-build-line 0 saved-point-x c: palisade-gate1)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate1)
+	(up-assign-builders c: palisade-gate-foundation1 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-seg-tc-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate < 1)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 1)
+	(up-can-build-line 0 saved-point-x c: palisade-gate2)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate2)
+	(up-assign-builders c: palisade-gate-foundation2 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-seg-tc-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate < 1)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 2)
+	(up-can-build-line 0 saved-point-x c: palisade-gate3)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate3)
+	(up-assign-builders c: palisade-gate-foundation3 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-seg-tc-done)
+	(set-goal mem-wall-stuck 0))
+
+(defrule
+	(up-compare-goal mem-wall-phase == wall-phase-build)
+	(up-compare-goal mem-wall-site == wall-site-tc)
+	(up-compare-goal mem-wall-segments == wall-seg-tc-gate-access)
+	(up-compare-goal mem-compound-side-len g:>= wall-gate-min-tiles)
+	(building-type-count-total gate < 1)
+	(wood-amount >= wall-segment-wood)
+	(up-point-contains saved-point-x c: wall-class)
+	(up-compare-goal mem-gate-align == 3)
+	(up-can-build-line 0 saved-point-x c: palisade-gate4)
+=>
+	(up-build-line saved-point-x saved-point-x c: palisade-gate4)
+	(up-assign-builders c: palisade-gate-foundation4 c: 2)
+	(up-assign-builders c: wall-class c: 1)
+	(set-goal mem-wall-segments wall-seg-tc-done)
+	(set-goal mem-wall-stuck 0))
 
 ; ======================== CHOKE WALL LINE (SITES 1-2) ========================
 (defrule
