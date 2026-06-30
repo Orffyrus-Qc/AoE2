@@ -226,28 +226,28 @@
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-east)
+	(up-get-point-distance point-x point2-x point-distance)
 	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point3-x point2-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point3-x point2-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-north)
+	(up-get-point-distance point3-x point2-x point-distance)
 	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 (defrule
 	(up-compare-goal mem-stronghold-active == 1)
 	(up-compare-goal mem-stronghold-seg == stronghold-seg-wall-south)
-	(up-get-point-distance point4-x point3-x point-distance)
-	(up-compare-goal point-distance g:> mem-compound-side-len)
+	(up-point-distance point4-x point3-x g:> mem-compound-side-len)
 =>
 	(set-goal mem-compound-gate-side wall-side-west)
+	(up-get-point-distance point4-x point3-x point-distance)
 	(up-modify-goal mem-compound-side-len g:= point-distance))
 
 ; ======================== GATE WALL STUB (PALISADE) ========================
